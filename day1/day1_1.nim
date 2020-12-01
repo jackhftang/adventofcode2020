@@ -7,8 +7,10 @@ const input = staticRead(inputFilename).strip().split("\n").mapIt(parseInt(it))
 # ----
 
 proc main() =
-  let a = input
+  for i in 0 ..< input.len:
+    for j in i+1 ..< input.len:
+      if input[i] + input[j] == 2020:
+        echo input[i] * input[j]
   
-
-while isMainModule:
+when isMainModule:
   main()
