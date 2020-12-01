@@ -2,4 +2,4 @@
 !*/
 !.gitignore
 !*.nim
-!*.in
+!*.txt

@@ -1,6 +1,6 @@
 import ../common
 
-# const inputFilename = "test.txt"
+# const inputFilename = "sample.txt"
 const inputFilename = "input.txt"
 const input = staticRead(inputFilename).strip().split("\n").mapIt(parseInt(it))
 
