@@ -1,5 +1,5 @@
-import sequtils, tables, sets, strformat, strutils, math, options, sugar, algorithm
-export sequtils, tables, sets, strformat, strutils, math, options, sugar, algorithm
+import sequtils, tables, sets, strformat, strutils, strscans, math, options, sugar, algorithm
+export sequtils, tables, sets, strformat, strutils, strscans, math, options, sugar, algorithm
 
 proc abort*(xs: varargs[string, `$`]) =
   # shorter raise exception
