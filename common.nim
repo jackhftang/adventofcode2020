@@ -1,5 +1,8 @@
-import sequtils, tables, sets, deques, heapqueue, strformat, strutils, strscans, math, options, sugar, algorithm
-export sequtils, tables, sets, deques, heapqueue, strformat, strutils, strscans, math, options, sugar, algorithm
+import sequtils, tables, sets, deques, heapqueue, strformat, strutils, strscans, math, options, sugar, algorithm, random
+export sequtils, tables, sets, deques, heapqueue, strformat, strutils, strscans, math, options, sugar, algorithm, random
+
+from os import `/`, parentDir
+export `/`, parentDir
 
 proc abort*(xs: varargs[string, `$`]) =
   # shorter raise exception
@@ -28,12 +31,14 @@ proc bsearchMin*[T: SomeInteger](lo, up: T, test: proc(t: T): bool): T =
   result = b
 
 proc logFloor*(x, base: int): int =
+  assert base > 0
   var t = 1
   while t <= x:
     t *= base
     result.inc
 
 proc logCeil*(x, base: int): int =
+  assert base > 0
   var t = 1
   while t < x:
     t *= base
@@ -69,3 +74,30 @@ type Point* = object
   x, y: int
 
 proc dot*(a,b: Point): int = a.x*b.x + a.y*b.y
+
+iterator permutation*(n: int): seq[int] =
+  var c = toSeq(0..<n)
+  while true:
+    yield c
+    if not nextPermutation(c):
+      break
+
+iterator combination*(m, n: int): seq[int] =
+  var c = toSeq(0..<n)  
+  block outer:
+    while true:
+      yield c
+      
+      # continue if not yet overflow (leaf operation)
+      inc c[^1]
+      if c[^1] <= m - 1: continue
+  
+      # seek i to that index that not yet overflow (rewind)
+      var i = n - 1
+      while c[i] >= m - n + i:
+        dec i
+        if i < 0: break outer
+
+      # reset i..m-1 values (reset to leaf)
+      inc c[i]
+      for j in i+1 ..< n: c[j] = c[j-1] + 1 
