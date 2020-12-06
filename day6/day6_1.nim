@@ -21,6 +21,11 @@ proc main() =
     cnt += v
   echo cnt
   
+#[
+proc main() =
+  let input = readFile(inputFilePath).strip.split("\n\n").mapIt(it.replace("\n").deduplicate.toCountTable)
+  echo toSeq(input.foldl(a+b).values()).sum()
+]#
 
 when isMainModule:
   main()

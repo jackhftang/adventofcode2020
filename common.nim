@@ -4,6 +4,11 @@ export sequtils, tables, sets, deques, heapqueue, strformat, strutils, strscans,
 from os import `/`, parentDir
 export `/`, parentDir
 
+proc count*[T](xs: openArray[T], test: proc(t: T): bool): int =
+  for x in xs:
+    if test(x):
+      result.inc()
+
 proc abort*(xs: varargs[string, `$`]) =
   # shorter raise exception
   raise newException(ValueError, xs.join(" "))
@@ -101,3 +106,15 @@ iterator combination*(m, n: int): seq[int] =
       # reset i..m-1 values (reset to leaf)
       inc c[i]
       for j in i+1 ..< n: c[j] = c[j-1] + 1 
+
+proc `+`*[T](a,b: CountTable[T]): CountTable[T] =
+  for k, v in a:
+    result.inc(k, v)
+  for k, v in b:
+    result.inc(k, v)
+
+proc `-`*[T](a,b: CountTable[T]): CountTable[T] =
+  for k, v in a:
+    result.inc(k, v)
+  for k, v in b:
+    result.inc(k, -v)
