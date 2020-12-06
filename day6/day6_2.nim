@@ -25,11 +25,11 @@ proc main() =
     cnt += v
   echo cnt
   
-#[
-proc main() =
-  let input = readFile(inputFilePath).strip.split("\n\n").mapIt(it.split("\n").map(s => s.toSeq.toHashSet).foldl(intersection(a,b)).toSeq.toCountTable)
+
+proc main2() =
+  let input = readFile(inputFilePath).strip.split("\n\n").mapIt(it.split("\n").map(toHashSet).foldl(a*b).toCountTable)
   echo toSeq(input.foldl(a+b).values()).sum()
-]#
 
 when isMainModule:
   main()
+  main2()

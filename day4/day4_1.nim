@@ -40,6 +40,18 @@ proc main() =
       cnt += 1
   echo cnt
 
+proc main2() =
+  let input = readFile(currentSourcePath.parentDir / inputFilename).strip.split("\n\n").map(ss => ss.replace("\n", " ").split(' '))
+  var cnt = 0
+  for xs in input:
+    let t = newTable[string, string]()
+    for x in xs:
+      let ss = x.split(":")
+      t[ss[0]] = ss[1]
+    if ["byr","iyr","eyr","hgt","hcl","ecl","pid"].allIt(it in t):
+      cnt.inc
+  echo cnt
 
 when isMainModule:
   main()
+  main2()
