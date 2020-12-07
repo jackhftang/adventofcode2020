@@ -22,13 +22,13 @@ proc count*[T](xs: openArray[T], test: proc(t: T): bool): int =
     if test(x):
       result.inc()
 
-proc indices*[T](xs: openArray[T], v: T): seq[int] =
+proc indexes*[T](xs: openArray[T], v: T): seq[int] =
   # return the index that equal to v (similar to find, but find all)
   for i, x in xs:
     if x == v:
       result.add i
 
-proc indices*[T](xs: openArray[T], test: proc(t: T): bool): seq[int] =
+proc indexes*[T](xs: openArray[T], test: proc(t: T): bool): seq[int] =
   # return the all index that satisfy `test`
   for i, x in xs:
     if test(x):
@@ -190,12 +190,12 @@ proc filter*[T](hs: SomeSet[T], f: proc(t: T): bool): HashSet[T] =
 # -------------------------------------------------------------
 # Table
 
-proc indices*[K, V](t: Table[K, V], v: V): seq[K] =
+proc indexes*[K, V](t: Table[K, V], v: V): seq[K] =
   for k, e in t:
     if e == v:
       result.add k
 
-proc indices*[K, V](t: Table[K, V], test: proc(v: V): bool): seq[K] =
+proc indexes*[K, V](t: Table[K, V], test: proc(v: V): bool): seq[K] =
   for k, e in t:
     if test(e):
       result.add k
@@ -229,12 +229,12 @@ proc `-`*[T](a, b: CountTable[T]): CountTable[T] =
   for k, v in b:
     result.inc(k, -v)
 
-proc indices*[T](t: CountTable[T], count: int): seq[T] =
+proc indexes*[T](t: CountTable[T], count: int): seq[T] =
   for k, v in t:
     if v == count:
       result.add k
 
-proc indices*[T](t: CountTable[T], test: proc(n: int): bool): seq[T] =
+proc indexes*[T](t: CountTable[T], test: proc(n: int): bool): seq[T] =
   for k, v in t:
     if test(v):
       result.add k
