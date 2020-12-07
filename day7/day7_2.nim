@@ -1,7 +1,7 @@
 import ../common
 
-# const inputFilename = "day7_input.txt"
-const inputFilename = "day7_sample.txt"
+const inputFilename = "day7_input.txt"
+# const inputFilename = "day7_sample.txt"
 const inputFilePath = currentSourcePath.parentDir / inputFilename
 
 # ----
@@ -22,8 +22,7 @@ proc parseBag(s: string): Bag =
       let ix = s.find(" ")
       let n = parseInt(s[0..ix-1])
       let c = s[ix .. s.rfind(" ")-1].strip
-      result.bags.add (n, c)    
-  echo result
+      result.bags.add (n, c)
 
 proc countBags(t: Table[string, Bag], s: string): int =
   result = 1
@@ -33,10 +32,14 @@ proc countBags(t: Table[string, Bag], s: string): int =
 
 proc main() =
   let input = readFile(inputFilePath).strip.split("\n").map(parseBag)
-  echo input
   var t: Table[string, Bag]
   for x in input: t[x.color] = x
   echo countBags(t, "shiny gold") - 1
 
+proc main2() =
+  let input = readFile(inputFilePath).strip.splitLines.map(parseBag).indexBy(x => x.color)
+  echo countBags(input, "shiny gold") - 1
+
 when isMainModule:
   main()
+  main2()

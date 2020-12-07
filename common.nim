@@ -1,7 +1,10 @@
-import sequtils, tables, sets, deques, heapqueue, strformat, strutils, strscans,
+import sequtils, sets, deques, heapqueue, strformat, strutils, strscans,
     math, options, sugar, algorithm, random
-export sequtils, tables, sets, deques, heapqueue, strformat, strutils, strscans,
+export sequtils, sets, deques, heapqueue, strformat, strutils, strscans,
     math, options, sugar, algorithm, random
+
+import tables except indexBy
+export tables except indexBy
 
 from os import `/`, parentDir
 export `/`, parentDir
@@ -76,24 +79,18 @@ proc digits*(n: int, base = 10): seq[int] =
 proc extgcd*(a, b: int): tuple[x: int, y: int, g: int] =
   # a*x + b*y == g
   var
-    q = a
-    r = b
-    x = 1
-    y = 0
-    x2 = 0
-    y2 = 1
+    (q, r) = (a, b)
+    (x, y) = (1, 0)
+    (x2, y2) = (0, 1)
   while r != 0:
     let q2 = q div r
-    let r2 = q mod r
-    let tx = x
-    let ty = y
-    x = x2
-    y = y2
-    x2 = tx - q2*x2
-    y2 = ty - q2*y2
-    q = r
-    r = r2
-  result = (x, y, q)
+    let r2 = q - r*q2
+    (x, y, x2, y2) = (x2, y2, x - q2*x2, y - q2*y2)
+    (q, r) = (r, r2)
+  if q < 0:
+    result = (-x, -y, -q)
+  else:
+    result = (x, y, q)
 
 proc modinv*(i, m: int): int =
   let (x, _, g) = extgcd(i, m)
@@ -214,6 +211,7 @@ proc `<=`*[T](a, b: seq[T]): bool =
   cmp(a, b) <= 0
 
 proc map*[T, S](xs: openArray[T], f: (int, T) -> S): seq[S] =
+  ## map with index and value
   for i, x in xs:
     result.add f(i, x)
 
@@ -263,13 +261,21 @@ proc maxIndexes*[T](xs: openArray[T]): seq[int] =
     elif xs[i] == v:
       result.add i
 
+proc indexBy*[K, T](xs: openArray[T], group: proc(t: T): K): Table[K, T] =
+  # one rank less than sequtils.indexBy for which compiler cannot infer auto types e.g. [(0,0)].indexBy(x => x[0])
+  # faster building table from array 
+  for x in xs:
+    result[group(x)] = x
+
 proc groupBy*[K, T](xs: openArray[T], group: proc(t: T): K): Table[K, seq[T]] =
   # unlike `indexBy` create seq[T]
+  # faster build table from array
   for x in xs:
     let g = group(x)
     result.mgetOrPut(g, @[]).add x
 
 proc unroll*[T](xs: openArray[T], f: proc(a, b: T): T): seq[T] =
+  # high-order function like cumsum
   runnableExamples:
     import sugar
     let y = [1, 2, 3, 4].unroll((a, b) => a+b)
@@ -281,6 +287,7 @@ proc unroll*[T](xs: openArray[T], f: proc(a, b: T): T): seq[T] =
     result[i] = f(result[i-1], xs[i])
 
 proc unroll*[T, S](xs: openArray[T], init: S, f: proc(a: S, b: T): S): seq[S] =
+  # accumulate over states
   runnableExamples:
     import sugar
     let y = [1, 2, 3].unroll(0, (a, b) => a+b)
