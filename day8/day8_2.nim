@@ -111,5 +111,60 @@ proc main() =
   
   echo "ans=", acc
 
+proc execute(input: seq[(string, int)]): Option[int] =
+  var t = initHashSet[int]()
+  var i, acc = 0
+  while true:
+    let inst = input[i]
+    if i in t: 
+      return none[int]()
+    t.incl i
+    case inst[0]:
+    of "acc":
+      acc += inst[1]
+      i += 1
+    of "jmp":
+      i += inst[1]
+    of "nop": 
+      i += 1
+    of "end":
+      break
+    else: 
+      abort(input)
+  return some(acc)
+
+proc main2() =
+  var input = readFile(inputFilePath).strip.split("\n").map(s => s.split(" ")).map(x => (x[0], parseInt(x[1])))
+  input.add ("end", 0)
+
+  var i = 0
+  while true:
+    let inst = input[i]
+    echo inst
+    case inst[0]:
+    of "acc":
+      i += 1
+    of "jmp":
+      input[i] = ("nop", inst[1])
+      let p = execute(input)
+      if p.isSome():
+        echo p.get()
+        break
+      input[i] = ("jmp", inst[1])
+      i += inst[1]
+    of "nop": 
+      input[i] = ("jmp", inst[1])
+      let p = execute(input)
+      if p.isSome():
+        echo p.get()
+        break
+      input[i] = ("nop", inst[1])
+      i += 1
+    of "end":
+      break
+    else: 
+      abort(input)
+
 when isMainModule:
   main()
+  main2()
