@@ -76,6 +76,12 @@ proc digits*(n: int, base = 10): seq[int] =
     result.add (t mod base)
     t = t div base
 
+proc fromDigits*(ds: seq[int], base = 10): int =
+  var b = 1
+  for d in ds:
+    result += d * b
+    b *= base
+
 proc extgcd*(a, b: int): tuple[x: int, y: int, g: int] =
   # a*x + b*y == g
   var
@@ -171,6 +177,15 @@ iterator integerPartition*(n: int): seq[int] =
 
 # -------------------------------------------------------------
 # openArray
+
+proc pairToTable*[T](xs: openArray[T]): Table[T,T] =
+  # conventional even-positions as key, odd-position as value
+  if xs.len mod 2 != 0:
+    raise newException(ValueError, "lenght of array must be even")
+  var i = 0
+  while i < xs.len:
+    result[xs[i]] = xs[i+1]
+    i += 2 
 
 proc cmp*[I, T](a, b: array[I, T]): int =
   for i, x in a:
@@ -311,6 +326,22 @@ proc fold*[T](xs: openArray[T], init: T, f: proc(a, b: T): T): T {.inline.} =
   for x in xs:
     result = f(result, x)
 
+iterator transpose*[T](xs: seq[seq[T]]): seq[T] =
+  let m = xs.len
+  if m > 0: 
+    var n = xs[0].len
+
+    # find max length 
+    for ys in xs:
+      n = max(n, ys.len)
+
+    for i in 0 ..< n:
+      var s = newSeq[T](m)
+      for j in 0 ..< m:
+        if i < xs[j].len:
+          s[j] = xs[j][i]
+      yield s
+
 template vectorize*(f, T: untyped): untyped =
   ## make a unary operation applicable over seq[T]
   runnableExamples:
@@ -333,9 +364,9 @@ template vectorize*(f, T, S: untyped): untyped =
   ## make a binary operation applicable over (seq[T], seq[S])
   runnableExamples:
     vectorize(`+`, int, int)
-    assert [1, 2] + [3, 4] == @[4, 6]
-    assert 1 + [2, 3] == @[3, 4]
-    assert [1, 2] + 3 == @[4, 5]
+    assert [1, 2] + [3, 4] == [4, 6]
+    assert 1 + [2, 3] == [3, 4]
+    assert [1, 2] + 3 == [4, 5]
   runnableExamples:
     vectorize(`+`, int, int)
     vectorize(`*`, int, int)
@@ -343,7 +374,7 @@ template vectorize*(f, T, S: untyped): untyped =
     assert (1+x) * 4 == 4*x + 4
   type
     outType = typeof(f(new(T)[], new(S)[]))
-
+    
   # vector-vector
   proc `f`*(xs: openArray[T], ys: openArray[S]): seq[outType] =
     let l = xs.len
@@ -418,6 +449,10 @@ proc filter*[K, V](t: Table[K, V], f: proc(k: K, v: V): bool): Table[K, V] =
   for k, e in t:
     if f(k, e):
       result[k] = e
+
+proc inversed*[K,V](t: Table[K,V]): Table[V,K] =
+  for k, v in t:
+    result[v] = k
 
 # -------------------------------------------------------------
 # CountTable
