@@ -17,5 +17,11 @@ proc main() =
   echo ans.count(1), ' ', ans.count(3)
   echo (ans.count(1)+1) * (ans.count(3)+1)
 
+proc main2() =
+  let input = readFile(inputFilePath).strip.split("\n").map(parseInt).sorted()
+  let ans = input[1..^1] - input[0..^2]
+  echo (ans.count(1)+1) * (ans.count(3)+1)
+
 when isMainModule:
   main()
+  main2()
