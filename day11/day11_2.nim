@@ -69,5 +69,45 @@ proc main() =
         cnt += 1
   echo cnt
 
+# ----
+
+proc next2(m: seq[seq[char]]): seq[seq[char]] =
+  for i in m.slice:
+    var row = newSeq[char](m.len)
+    for j in m[0].slice:
+      var n = 0
+      for dir in directions:
+        var ps = [i,j] + dir
+        while ps[0] in m.slice and ps[1] in m[0].slice:
+          let c = m[ps[0]][ps[1]]
+          if c == '#':
+            n += 1
+            break
+          if c == 'L':
+            break
+          ps = ps + dir
+
+      let c = m[i][j]
+      if c == 'L' and n == 0:
+        row[j] = '#'
+      elif c == '#' and n >= 5:
+        row[j] = 'L'
+      else:
+        row[j] = c
+
+    result.add row
+
+proc main2() =
+  var input = readFile(inputFilePath).strip.split("\n").map(line => line.toSeq())
+
+  var v = input
+  while true:
+    let v2 = next2(v)
+    if v == v2: break
+    v = v2
+
+  echo v.map(x => x.count('#')).sum
+
 when isMainModule:
   main()
+  main2()

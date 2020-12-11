@@ -326,6 +326,9 @@ proc fold*[T](xs: openArray[T], init: T, f: proc(a, b: T): T): T {.inline.} =
   for x in xs:
     result = f(result, x)
 
+proc slice*[T](xs: openArray[T]): Slice[int] {.inline.} =
+  0..xs.high
+  
 iterator transpose*[T](xs: seq[seq[T]]): seq[T] =
   let m = xs.len
   if m > 0: 
@@ -500,7 +503,6 @@ proc filter*[T](t: CountTable[T], f: proc(k: T, n: int): bool): CountTable[T] =
 
 # -------------------------------------------------------------
 # macros
-
 
 macro forSum*(args: varargs[untyped]): untyped =
   ## transform to a serial of  `for` statement
