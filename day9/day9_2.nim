@@ -9,7 +9,7 @@ const inputFilePath = currentSourcePath.parentDir / inputFilename
 
 proc main() =
   let input = readFile(inputFilePath).strip.split("\n").map(parseInt)
-  let ss = input.unroll(0, (a,b) => a+b)
+  let ss = input.foldlSeq(0, a+b)
   echo ss
 
   var ans: seq[(int,int)]

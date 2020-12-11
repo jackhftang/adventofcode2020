@@ -289,28 +289,6 @@ proc groupBy*[K, T](xs: openArray[T], group: proc(t: T): K): Table[K, seq[T]] =
     let g = group(x)
     result.mgetOrPut(g, @[]).add x
 
-proc unroll*[T](xs: openArray[T], f: proc(a, b: T): T): seq[T] =
-  # high-order function like cumsum
-  runnableExamples:
-    import sugar
-    let y = [1, 2, 3, 4].unroll((a, b) => a+b)
-    assert y == @[1, 3, 6, 10]
-  if xs.len == 0: return
-  result = newSeq[T](xs.len)
-  result[0] = xs[0]
-  for i in 1 .. xs.high:
-    result[i] = f(result[i-1], xs[i])
-
-proc unroll*[T, S](xs: openArray[T], init: S, f: proc(a: S, b: T): S): seq[S] =
-  # accumulate over states
-  runnableExamples:
-    import sugar
-    let y = [1, 2, 3].unroll(0, (a, b) => a+b)
-    assert y == @[0, 1, 3, 6]
-  result = newSeq[S](xs.len + 1)
-  result[0] = init
-  for i, x in xs: result[i+1] = f(result[i], x)
-
 proc fold*[T](xs: openArray[T], f: proc(a, b: T): T): T {.inline.} =
   ## `proc` version of foldl
   if xs.len == 0: raise newException(ValueError, "Cannot fold empty array")
@@ -326,8 +304,67 @@ proc fold*[T](xs: openArray[T], init: T, f: proc(a, b: T): T): T {.inline.} =
   for x in xs:
     result = f(result, x)
 
+proc foldSeq*[T](xs: openArray[T], f: proc(a, b: T): T): seq[T] =
+  # high-order function like cumsum
+  runnableExamples:
+    import sugar
+    let y = [1, 2, 3, 4].foldSeq((a, b) => a+b)
+    assert y == @[1, 3, 6, 10]
+  if xs.len == 0: return
+  result = newSeq[T](xs.len)
+  result[0] = xs[0]
+  for i in 1 .. xs.high:
+    result[i] = f(result[i-1], xs[i])
+
+proc foldSeq*[T, S](xs: openArray[T], init: S, f: proc(a: S, b: T): S): seq[S] =
+  # accumulate over states
+  runnableExamples:
+    import sugar
+    let y = [1, 2, 3].foldSeq(0, (a, b) => a+b)
+    assert y == @[0, 1, 3, 6]
+  result = newSeq[S](xs.len + 1)
+  result[0] = init
+  for i, x in xs: result[i+1] = f(result[i], x)
+
+template foldlSeq*(xs, init, body: untyped): untyped =
+  # template version of fold
+  runnableExamples:
+    import algorithm
+    let xs = [1,2,3,4]
+    assert xs.cumsummed == xs.foldlList(a+b)
+  type T = typeof(init)
+  var result = newSeq[T](xs.len+1)
+  if xs.len > 0:
+    result[0] = init
+    for i in 0..xs.high:
+      let a {.inject.} = result[i]
+      let b {.inject.} = xs[i]
+      result[i+1] = body
+  result
+
+template foldlSeq*(xs, body: untyped): untyped =
+  # template version of fold
+  runnableExamples:
+    import algorithm
+    let xs = [1,2,3,4]
+    assert xs.cumsummed == xs.foldlList(a+b)
+  type T = typeof(xs[0])
+  var result = newSeq[T](xs.len)
+  if xs.len > 0:
+    result[0] = xs[0]
+    for i in 1..xs.high:
+      let a {.inject.} = result[i-1]
+      let b {.inject.} = xs[i]
+      result[i] = body
+  result
+
 proc slice*[T](xs: openArray[T]): Slice[int] {.inline.} =
-  0..xs.high
+  # useful to check bound and iteration
+  runnableExamples:
+    let xs = toSeq(1..100)
+    for i in xs.slice:
+      assert i in xs.slice
+  xs.low..xs.high
   
 iterator transpose*[T](xs: seq[seq[T]]): seq[T] =
   let m = xs.len
