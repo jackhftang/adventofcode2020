@@ -55,30 +55,22 @@ proc main() =
 # ----
 
 proc next2(m: seq[seq[char]]): seq[seq[char]] =
-  for i in m.slice:
-    var row = newSeq[char](m[0].len)
-    for j in m[0].slice:
-      let c = m[i][j]
+  result = newSeqWith(m.len, newSeq[char](m[0].len))
+  forProd i, j in m.slice, m[0].slice:
+    
+    var n = 0
+    forProd k, l in i-1..i+1, j-1..j+1:
+      if k == i and l == j: continue
+      if k notin m.slice: continue
+      if l notin m[0].slice: continue
+      if m[k][l] == '#':
+        n += 1
 
-      var n = 0
-      for k in -1..1:
-        for l in -1..1:
-          if k == 0 and l == 0: continue
-          let i2 = i+k
-          let j2 = j+l
-          if i2 notin m.slice: continue
-          if j2 notin m[0].slice: continue
-          if m[i2][j2] == '#':
-            n += 1
-
-      if c == 'L' and n == 0:
-        row[j] = '#'
-      elif c == '#' and n >= 4:
-        row[j] = 'L'
-      else:
-        row[j] = c
-
-    result.add row
+    let c = m[i][j]
+    result[i][j] = 
+      if c == 'L' and n == 0: '#'
+      elif c == '#' and n >= 4: 'L'
+      else: c
 
 proc main2() =
   var input = readFile(inputFilePath).strip.split("\n").map(line => line.toSeq())
