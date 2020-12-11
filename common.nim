@@ -451,6 +451,7 @@ proc filter*[K, V](t: Table[K, V], f: proc(k: K, v: V): bool): Table[K, V] =
       result[k] = e
 
 proc inversed*[K,V](t: Table[K,V]): Table[V,K] =
+  ## Swap the Keys and values, inverse of bijective function
   for k, v in t:
     result[v] = k
 
@@ -503,7 +504,8 @@ proc filter*[T](t: CountTable[T], f: proc(k: T, n: int): bool): CountTable[T] =
 
 macro forSum*(args: varargs[untyped]): untyped =
   ## transform to a serial of  `for` statement
-  ##
+  ## Note that the body is duplicated
+  ## 
   ## ..code-block: nim
   ##  forSum i in 1..10, "abcd":
   ##    echo i
