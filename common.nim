@@ -738,3 +738,17 @@ macro forZip*(args: varargs[untyped]): untyped =
 
   stmts.add forStmt
   result = newBlockStmt(stmts)
+
+# -------------------------------------------------------------
+# geometry
+
+proc rotate90cw*[T](pos: openArray[T], i: int): seq[T] =
+  if pos.len != 2: raise newException(ValueError, "Not a 2-D point")
+  var n = i mod 4
+  if n < 0: n += 4
+  result = case n:
+    of 0: @[pos[0], pos[1]]
+    of 1: @[pos[1], -pos[0]]
+    of 2: @[-pos[0], -pos[1]]
+    of 3: @[-pos[1], pos[0]]
+    else: raise newException(ValueError, "Impossible " & $n)
