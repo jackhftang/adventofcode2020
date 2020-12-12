@@ -366,7 +366,7 @@ proc slice*[T](xs: openArray[T]): Slice[int] {.inline.} =
       assert i in xs.slice
   xs.low..xs.high
   
-iterator transpose*[T](xs: seq[seq[T]]): seq[T] =
+iterator transpose*[T](xs: openArray[seq[T]]): seq[T] =
   let m = xs.len
   if m > 0: 
     var n = xs[0].len
@@ -742,13 +742,42 @@ macro forZip*(args: varargs[untyped]): untyped =
 # -------------------------------------------------------------
 # geometry
 
-proc rotate90cw*[T](pos: openArray[T], i: int): seq[T] =
+const nei4* = [
+  @[1, 0],
+  @[0, 1],
+  @[-1, 0],
+  @[0, -1]
+]
+
+const nei8* = [
+  @[-1,-1],
+  @[-1,0],
+  @[-1,1],
+  @[0,-1],
+  @[0,1],
+  @[1,-1],
+  @[1,0],
+  @[1,1],
+]
+
+proc rotate90*[T](pos: openArray[T], i: int = 1): seq[T] =
+  # this corresponding to turn left
   if pos.len != 2: raise newException(ValueError, "Not a 2-D point")
   var n = i mod 4
   if n < 0: n += 4
   result = case n:
     of 0: @[pos[0], pos[1]]
-    of 1: @[pos[1], -pos[0]]
+    of 1: @[-pos[1], pos[0]]
     of 2: @[-pos[0], -pos[1]]
-    of 3: @[-pos[1], pos[0]]
+    of 3: @[pos[1], -pos[0]]
     else: raise newException(ValueError, "Impossible " & $n)
+
+proc rotate90cw*[T](pos: openArray[T], i: int = 1): seq[T] =
+  # this corresponding to turn right
+  rotate90(pos, -i)
+
+proc rotationMatrix*[T: SomeFloat](rad: T, ps: openArray[T]): seq[T] =
+  # anti-clockwise
+  let c = cos(rad)
+  let s = sin(rad)
+  result = @[c*ps[0] - s*ps[1], s*ps[0] + c*ps[1]]

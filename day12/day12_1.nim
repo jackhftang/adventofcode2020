@@ -52,9 +52,9 @@ proc main2() =
     of 'F':
       pos = pos + n * dir
     of 'L':
-      dir = rotate90cw(dir, (-n div 90) mod 4)
+      dir = rotate90(dir, (n div 90) mod 4)
     of 'R':
-      dir = rotate90cw(dir, (n div 90) mod 4)
+      dir = rotate90(dir, (-n div 90) mod 4)
     else:
       abort(a)
   echo pos.map(x => abs(x)).sum
