@@ -1,7 +1,7 @@
 import sequtils, sets, deques, heapqueue, strformat, strutils, strscans,
-    math, options, sugar, algorithm, random
+    math, options, sugar, algorithm, random, lists, complex
 export sequtils, sets, deques, heapqueue, strformat, strutils, strscans,
-    math, options, sugar, algorithm, random
+    math, options, sugar, algorithm, random, lists, complex
 
 import tables except indexBy
 export tables except indexBy
@@ -25,6 +25,9 @@ proc abort*(xs: varargs[string, `$`]) =
 proc toCountTable*(s: string): CountTable[char] =
   # s.toSeq.toCountTable
   for c in s: result.inc(c)
+
+proc toHashSet*(s: string): HashSet[char] =
+  for c in s: result.incl(c)
 
 # -------------------------------------------------------------
 # control flow
@@ -186,6 +189,12 @@ proc pairToTable*[T](xs: openArray[T]): Table[T,T] =
   while i < xs.len:
     result[xs[i]] = xs[i+1]
     i += 2 
+
+proc `[]`*[T](m: openArray[seq[T]], p: seq[int]): T =
+  m[p[0]][p[1]]
+
+proc `[]`*[T](m: openArray[seq[T]], p: array[2, int]): T =
+  m[p[0]][p[1]]
 
 proc cmp*[I, T](a, b: array[I, T]): int =
   for i, x in a:
@@ -432,12 +441,14 @@ template vectorize*(f, T, S: untyped): untyped =
     result.setLen(ys.len)
     for i in 0 ..< ys.len: result[i] = f(x, ys[i])
 
+vectorize(`-`, int)
 vectorize(`+`, int, int)
 vectorize(`-`, int, int)
 vectorize(`*`, int, int)
 vectorize(`div`, int, int)
 vectorize(`mod`, int, int)
 
+vectorize(`-`, float)
 vectorize(`+`, float, float)
 vectorize(`-`, float, float)
 vectorize(`*`, float, float)
@@ -445,9 +456,6 @@ vectorize(`/`, float, float)
 
 # -------------------------------------------------------------
 # HashSet
-
-proc toHashSet*(s: string): HashSet[char] =
-  for c in s: result.incl(c)
 
 proc toCountTable*[T](hs: SomeSet[T]): CountTable[T] =
   for x in hs:
@@ -742,27 +750,36 @@ macro forZip*(args: varargs[untyped]): untyped =
 # -------------------------------------------------------------
 # geometry
 
+
 const nei4* = [
-  @[1, 0],
-  @[0, 1],
-  @[-1, 0],
-  @[0, -1]
+  # positive toward left and bottom
+  # [y, x]
+  # in anti-clockwise order
+  @[ 0, 1],  # E
+  @[-1, 0],  # N
+  @[ 0,-1],  # W
+  @[ 1, 0],  # S
 ]
 
 const nei8* = [
-  @[-1,-1],
-  @[-1,0],
-  @[-1,1],
-  @[0,-1],
+  # positive toward left and bottom
+  # [y, x]
+  # in anti-clockwise order
   @[0,1],
+  @[-1,1],
+  @[-1,0],
+  @[-1,-1],
+  @[0,-1],
   @[1,-1],
   @[1,0],
   @[1,1],
 ]
 
-proc rotate90*[T](pos: openArray[T], i: int = 1): seq[T] =
-  # this corresponding to turn left
-  if pos.len != 2: raise newException(ValueError, "Not a 2-D point")
+proc turnLeft*[T](pos: openArray[T], i: int = 1): seq[T] =
+  # rotate 90-degree anti-clockwise i times
+  # this corresponds to turn left
+  if pos.len != 2: 
+    raise newException(ValueError, "Not a 2-D point")
   var n = i mod 4
   if n < 0: n += 4
   result = case n:
@@ -772,12 +789,14 @@ proc rotate90*[T](pos: openArray[T], i: int = 1): seq[T] =
     of 3: @[pos[1], -pos[0]]
     else: raise newException(ValueError, "Impossible " & $n)
 
-proc rotate90cw*[T](pos: openArray[T], i: int = 1): seq[T] =
-  # this corresponding to turn right
-  rotate90(pos, -i)
+proc turnRight*[T](pos: openArray[T], i: int = 1): seq[T] =
+  # rotate 90 deg clockwise
+  turnLeft(pos, -i)
 
-proc rotationMatrix*[T: SomeFloat](rad: T, ps: openArray[T]): seq[T] =
-  # anti-clockwise
-  let c = cos(rad)
-  let s = sin(rad)
-  result = @[c*ps[0] - s*ps[1], s*ps[0] + c*ps[1]]
+proc rotateRad*[T: SomeFloat](z: Complex[T], rad: T): Complex[T] =
+  ## rotate rad anti-clockwise
+  result = complex[T](cos(rad), sin(rad)) * z
+
+proc rotateDeg*[T: SomeFloat](z: Complex[T], deg: T): Complex[T] = 
+  ## rotate rad anti-clockwise
+  rotateRad(deg*PI/180.0)

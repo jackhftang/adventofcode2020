@@ -48,13 +48,13 @@ proc main2() =
   for (a,n) in input:
     case a:
     of {'N', 'E', 'W', 'S'}:
-      pos = pos + n * dp[dirs.find(a)]
+      pos = pos + n * nei4["ENWS".find(a)]
     of 'F':
       pos = pos + n * dir
     of 'L':
-      dir = rotate90(dir, (n div 90) mod 4)
+      dir = turnLeft(dir, (n div 90) mod 4)
     of 'R':
-      dir = rotate90(dir, (-n div 90) mod 4)
+      dir = turnLeft(dir, (-n div 90) mod 4)
     else:
       abort(a)
   echo pos.map(x => abs(x)).sum

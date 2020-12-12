@@ -73,12 +73,13 @@ proc main() =
 
 proc next2(m: seq[seq[char]]): seq[seq[char]] =
   result = newSeqWith(m.len, newSeq[char](m[0].len))
+  
   forProd i,j in m.slice, m[0].slice:
     var n = 0
     for dir in directions:
       var ps = [i,j] + dir
       while ps[0] in m.slice and ps[1] in m[0].slice:
-        let c = m[ps[0]][ps[1]]
+        let c = m[ps]
         if c == '#':
           n += 1
           break

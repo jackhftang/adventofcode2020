@@ -51,17 +51,17 @@ proc main() =
 proc main2() =
   let input = readFile(inputFilePath).strip.split("\n").map(s => (s[0], parseInt s[1..^1]))
   var pos = @[0, 0]
-  var wp = @[10, 1]
+  var wp = @[-1, 10]
   for (a,n) in input:
     case a:
     of {'N', 'E', 'W', 'S'}:
-      wp = wp + n * dp[dirs.find(a)]
+      wp = wp + n * nei4["ENWS".find(a)]
     of 'F':
       pos = pos + n * wp
     of 'L':
-      wp = rotate90(wp, (n div 90) mod 4)
+      wp = wp.turnLeft(n div 90)
     of 'R':
-      wp = rotate90(wp, (-n div 90) mod 4)
+      wp = wp.turnRight(n div 90)
     else:
       abort(a)
   echo pos.map(x => abs(x)).sum
