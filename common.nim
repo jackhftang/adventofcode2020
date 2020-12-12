@@ -184,17 +184,42 @@ iterator integerPartition*(n: int): seq[int] =
 proc pairToTable*[T](xs: openArray[T]): Table[T,T] =
   # conventional even-positions as key, odd-position as value
   if xs.len mod 2 != 0:
-    raise newException(ValueError, "lenght of array must be even")
+    raise newException(ValueError, "length of array must be even")
   var i = 0
   while i < xs.len:
     result[xs[i]] = xs[i+1]
     i += 2 
 
+proc slice*[T](xs: openArray[T]): Slice[int] {.inline.} =
+  # useful to check bound and iteration
+  runnableExamples:
+    let xs = toSeq(1..100)
+    for i in xs.slice:
+      assert i in xs.slice
+  xs.low..xs.high
+
 proc `[]`*[T](m: openArray[seq[T]], p: seq[int]): T =
+  assert p.len == 2
   m[p[0]][p[1]]
 
 proc `[]`*[T](m: openArray[seq[T]], p: array[2, int]): T =
   m[p[0]][p[1]]
+
+proc `[]=`*[T](m: var openArray[seq[T]], p: seq[int], v: T) =
+  assert p.len == 2
+  m[p[0]][p[1]] = v
+
+proc `[]=`*[T](m: var openArray[seq[T]], p: array[2, int], v: T) =
+  m[p[0]][p[1]] = v
+
+proc hasKey*[T](a: openArray[T], k: int): bool {.inline.} =
+  k in a.slice
+
+proc hasKey*[T](a: openArray[seq[T]], k: seq[int]): bool =
+  case k.len:
+  of 1: k[0] in a.slice
+  of 2: k[0] in a.slice and k[1] in a[k[0]].slice
+  else: false
 
 proc cmp*[I, T](a, b: array[I, T]): int =
   for i, x in a:
@@ -366,14 +391,6 @@ template foldlSeq*(xs, body: untyped): untyped =
       let b {.inject.} = xs[i]
       result[i] = body
   result
-
-proc slice*[T](xs: openArray[T]): Slice[int] {.inline.} =
-  # useful to check bound and iteration
-  runnableExamples:
-    let xs = toSeq(1..100)
-    for i in xs.slice:
-      assert i in xs.slice
-  xs.low..xs.high
   
 iterator transpose*[T](xs: openArray[seq[T]]): seq[T] =
   let m = xs.len
