@@ -19,11 +19,21 @@ proc main() =
   var r = 0
   var d = 1
   for (b,m) in ns:
-    let (r1,d1) = congrunence(d, b-r, m)
+    let (r1,d1) = linearCongruence(d, b-r, m)
     r += r1 * d
     d *= d1
   
   echo r
 
+proc main2() =
+  var input = readFile(inputFilePath).strip.split("\n")
+  var ns: seq[(int, int,int)]
+  for i, n in toSeq(input[1].split(",")):
+    if n != "x":
+      ns.add (1, -i, parseInt n)
+  let ans = linearCongruence(ns)  
+  echo ans[0]
+
 when isMainModule:
   main()
+  main2()

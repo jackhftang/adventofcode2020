@@ -123,19 +123,28 @@ proc modpow*(x, p, m: int): int =
     t = t * t mod m
     s = s shr 1
 
-proc congrunence*(a, b, m: int): (int, int) =
+proc linearCongruence*(a, b, m: int): (int, int) =
   # solve x for a*x = b (mod m)
-  # x = r (mod d) where r, d = congrunence(a,b,m)
+  # x = r (mod d) where r, d = congruence(a,b,m)
   # postcondition:
   # r >= 0
   # sgn(d) = sgn(m)
   let (p, _, g) = extgcd(a, m)
   if b mod g != 0:
-    raise newException(ValueError, fmt"No solution for congruencne({a}, {b}, {m})")
+    raise newException(ValueError, fmt"No solution for congruence({a}, {b}, {m})")
   let d = m div g
   var r = p * b div g mod d
   if r < 0: r += d
   return (r, d)
+
+proc linearCongruence*(congruences: seq[(int, int, int)]): (int, int) =
+  var r = 0
+  var d = 1
+  for (a,b,m) in congruences:
+    let (r1,d1) = linearCongruence(a*d, b-a*r, m)
+    r += r1 * d
+    d *= d1
+  result = (r,d)
 
 # -------------------------------------------------------------
 # Combinatorics
