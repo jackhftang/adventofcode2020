@@ -87,6 +87,10 @@ proc fromDigits*(ds: seq[int], base = 10): int =
 
 proc extgcd*(a, b: int): tuple[x: int, y: int, g: int] =
   # a*x + b*y == g
+  #
+  # postcondition:
+  # g == 0 when a = b = 0
+  # g > 0 otherwise
   var
     (q, r) = (a, b)
     (x, y) = (1, 0)
@@ -102,11 +106,14 @@ proc extgcd*(a, b: int): tuple[x: int, y: int, g: int] =
     result = (x, y, q)
 
 proc modinv*(i, m: int): int =
-  let (x, _, g) = extgcd(i, m)
-  result = if g < 0: -x else: x
+  # postcondition:
+  # result in 0..m-1
+  let (x, _, _) = extgcd(i, m)
+  result = x
   if result < 0: result += m
 
 proc modpow*(x, p, m: int): int =
+  assert p >= 0
   var t = x
   var s = p
   result = 1
@@ -115,6 +122,20 @@ proc modpow*(x, p, m: int): int =
       result = result * t mod m
     t = t * t mod m
     s = s shr 1
+
+proc congrunence*(a, b, m: int): (int, int) =
+  # solve x for a*x = b (mod m)
+  # x = r (mod d) where r, d = congrunence(a,b,m)
+  # postcondition:
+  # r >= 0
+  # sgn(d) = sgn(m)
+  let (p, _, g) = extgcd(a, m)
+  if b mod g != 0:
+    raise newException(ValueError, fmt"No solution for congruencne({a}, {b}, {m})")
+  let d = m div g
+  var r = p * b div g mod d
+  if r < 0: r += d
+  return (r, d)
 
 # -------------------------------------------------------------
 # Combinatorics
@@ -181,14 +202,14 @@ iterator integerPartition*(n: int): seq[int] =
 # -------------------------------------------------------------
 # openArray
 
-proc pairToTable*[T](xs: openArray[T]): Table[T,T] =
+proc pairToTable*[T](xs: openArray[T]): Table[T, T] =
   # conventional even-positions as key, odd-position as value
   if xs.len mod 2 != 0:
     raise newException(ValueError, "length of array must be even")
   var i = 0
   while i < xs.len:
     result[xs[i]] = xs[i+1]
-    i += 2 
+    i += 2
 
 proc slice*[T](xs: openArray[T]): Slice[int] {.inline.} =
   # useful to check bound and iteration
@@ -312,7 +333,7 @@ proc maxIndexes*[T](xs: openArray[T]): seq[int] =
 
 proc indexBy*[K, T](xs: openArray[T], group: proc(t: T): K): Table[K, T] =
   # one rank less than sequtils.indexBy for which compiler cannot infer auto types e.g. [(0,0)].indexBy(x => x[0])
-  # faster building table from array 
+  # faster building table from array
   for x in xs:
     result[group(x)] = x
 
@@ -364,7 +385,7 @@ template foldlSeq*(xs, init, body: untyped): untyped =
   # template version of fold
   runnableExamples:
     import algorithm
-    let xs = [1,2,3,4]
+    let xs = [1, 2, 3, 4]
     assert xs.cumsummed == xs.foldlList(a+b)
   type T = typeof(init)
   var result = newSeq[T](xs.len+1)
@@ -380,7 +401,7 @@ template foldlSeq*(xs, body: untyped): untyped =
   # template version of fold
   runnableExamples:
     import algorithm
-    let xs = [1,2,3,4]
+    let xs = [1, 2, 3, 4]
     assert xs.cumsummed == xs.foldlList(a+b)
   type T = typeof(xs[0])
   var result = newSeq[T](xs.len)
@@ -391,13 +412,13 @@ template foldlSeq*(xs, body: untyped): untyped =
       let b {.inject.} = xs[i]
       result[i] = body
   result
-  
+
 iterator transpose*[T](xs: openArray[seq[T]]): seq[T] =
   let m = xs.len
-  if m > 0: 
+  if m > 0:
     var n = xs[0].len
 
-    # find max length 
+    # find max length
     for ys in xs:
       n = max(n, ys.len)
 
@@ -440,7 +461,7 @@ template vectorize*(f, T, S: untyped): untyped =
     assert (1+x) * 4 == 4*x + 4
   type
     outType = typeof(f(new(T)[], new(S)[]))
-    
+
   # vector-vector
   proc `f`*(xs: openArray[T], ys: openArray[S]): seq[outType] =
     let l = xs.len
@@ -515,7 +536,7 @@ proc filter*[K, V](t: Table[K, V], f: proc(k: K, v: V): bool): Table[K, V] =
     if f(k, e):
       result[k] = e
 
-proc inversed*[K,V](t: Table[K,V]): Table[V,K] =
+proc inversed*[K, V](t: Table[K, V]): Table[V, K] =
   ## Swap the Keys and values, inverse of bijective function
   for k, v in t:
     result[v] = k
@@ -569,7 +590,7 @@ proc filter*[T](t: CountTable[T], f: proc(k: T, n: int): bool): CountTable[T] =
 macro forSum*(args: varargs[untyped]): untyped =
   ## transform to a serial of  `for` statement
   ## Note that the body is duplicated
-  ## 
+  ##
   ## ..code-block: nim
   ##  forSum i in 1..10, "abcd":
   ##    echo i
@@ -770,32 +791,32 @@ macro forZip*(args: varargs[untyped]): untyped =
 
 const nei4* = [
   # positive toward left and bottom
-  # [y, x]
-  # in anti-clockwise order
-  @[ 0, 1],  # E
-  @[-1, 0],  # N
-  @[ 0,-1],  # W
-  @[ 1, 0],  # S
+    # [y, x]
+    # in anti-clockwise order
+  @[0, 1], # E
+  @[-1, 0], # N
+  @[0, -1], # W
+  @[1, 0], # S
 ]
 
 const nei8* = [
   # positive toward left and bottom
-  # [y, x]
-  # in anti-clockwise order
-  @[0,1],
-  @[-1,1],
-  @[-1,0],
-  @[-1,-1],
-  @[0,-1],
-  @[1,-1],
-  @[1,0],
-  @[1,1],
+    # [y, x]
+    # in anti-clockwise order
+  @[0, 1],
+  @[-1, 1],
+  @[-1, 0],
+  @[-1, -1],
+  @[0, -1],
+  @[1, -1],
+  @[1, 0],
+  @[1, 1],
 ]
 
 proc turnLeft*[T](pos: openArray[T], i: int = 1): seq[T] =
   # rotate 90-degree anti-clockwise i times
   # this corresponds to turn left
-  if pos.len != 2: 
+  if pos.len != 2:
     raise newException(ValueError, "Not a 2-D point")
   var n = i mod 4
   if n < 0: n += 4
@@ -814,6 +835,6 @@ proc rotateRad*[T: SomeFloat](z: Complex[T], rad: T): Complex[T] =
   ## rotate rad anti-clockwise
   result = complex[T](cos(rad), sin(rad)) * z
 
-proc rotateDeg*[T: SomeFloat](z: Complex[T], deg: T): Complex[T] = 
+proc rotateDeg*[T: SomeFloat](z: Complex[T], deg: T): Complex[T] =
   ## rotate rad anti-clockwise
   rotateRad(deg*PI/180.0)
