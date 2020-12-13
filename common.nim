@@ -89,7 +89,7 @@ proc extgcd*(a, b: int): tuple[x: int, y: int, g: int] =
   # a*x + b*y == g
   #
   # postcondition:
-  # g == 0 when a = b = 0
+  # g = 0 when a = b = 0
   # g > 0 otherwise
   var
     (q, r) = (a, b)
@@ -127,17 +127,19 @@ proc linearCongruence*(a, b, m: int): (int, int) =
   # solve x for a*x = b (mod m)
   # x = r (mod d) where r, d = congruence(a,b,m)
   # postcondition:
-  # r >= 0
-  # sgn(d) = sgn(m)
+  # r in 0..d-1
+  # d > 0
   let (p, _, g) = extgcd(a, m)
   if b mod g != 0:
     raise newException(ValueError, fmt"No solution for congruence({a}, {b}, {m})")
-  let d = m div g
+  var d = m div g
+  if d < 0: d += g
   var r = p * b div g mod d
   if r < 0: r += d
   return (r, d)
 
 proc linearCongruence*(congruences: seq[(int, int, int)]): (int, int) =
+  # system of linear congruence
   var r = 0
   var d = 1
   for (a,b,m) in congruences:
