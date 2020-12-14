@@ -23,9 +23,8 @@ proc main2() =
   var input = readFile(inputFilePath).strip.split("\n")
   let m = input[0].parseInt
   let ts = input[1].split(",").filter(s => s != "x").map(parseInt)
-  let ns = ts.map(t => (t, t * ((m+t-1) div t) ))
-  let ix = ns.map(x => x[1]).minIndex
-  echo (ns[ix][1] - m) * ns[ix][0]
+  let ans = ts.map(t => (t * ((m+t-1) div t), t)).min
+  echo (ans[0] - m) * ans[1]
 
 when isMainModule:
   main()

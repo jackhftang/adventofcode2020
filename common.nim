@@ -71,6 +71,47 @@ proc logCeil*(x, base: int): int =
     t *= base
     result.inc
 
+proc sqrt*(x: int): int =
+  if x < 0: raise newException(ValueError, "Cannot sqrt negative number " & $x)
+  if x == 0: return 0
+  if x == 1: return 1
+
+  # estimate ans
+  var t = x div 2
+  while true:
+    let t2 = (t + (x div t)) div 2
+    if t2 >= t: break
+    t = t2
+  result = t 
+
+proc quadraticRoots*(a,b,c: int): HashSet[int] =
+  # find all roots of x such that a*x^2 + b*x + c = 0
+  # throw error if there are infinite roots
+  if a == 0:
+    if b == 0:
+      if c == 0: 
+        raise newException(ValueError, "infinite roots")
+    else:
+      if c mod b == 0:
+        result.incl (-c div b)
+  else:
+    let t = b*b - 4 * a * c
+    if t < 0: 
+      # only real number roots
+      return
+
+    let t2 = sqrt(t)
+    if t2*t2 != t: 
+      # not a integer square
+      return
+
+    let x1 = -b + t2
+    let x2 = -b - t2
+    if x1 mod (2*a) == 0:
+      result.incl (x1 div (2*a))
+    if x2 mod (2*a) == 0:
+      result.incl (x2 div (2*a))
+
 proc digits*(n: int, base = 10): seq[int] =
   assert n >= 0
   if n == 0: return @[0]
@@ -108,7 +149,9 @@ proc extgcd*(a, b: int): tuple[x: int, y: int, g: int] =
 proc modinv*(i, m: int): int =
   # postcondition:
   # result in 0..m-1
-  let (x, _, _) = extgcd(i, m)
+  let (x, _, g) = extgcd(i, m)
+  if g != 1:
+    raise newException(ValueError, fmt"{i} do not have inverse in modulo {m}")
   result = x
   if result < 0: result += m
 
