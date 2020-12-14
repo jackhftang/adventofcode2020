@@ -35,7 +35,7 @@ proc main() =
     if line.startsWith("mask"):
       let ss = line.split(" ")
       mask = ss[2].toSeq.reversed
-    elif line.startsWIth("mem"):
+    elif line.startsWith("mem"):
       var x, y: int
       assert scanf(line, "mem[$i] = $i", x, y)
       for a in powerset(mask, x):

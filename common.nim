@@ -113,6 +113,7 @@ proc quadraticRoots*(a,b,c: int): HashSet[int] =
       result.incl (x2 div (2*a))
 
 proc digits*(n: int, base = 10): seq[int] =
+  # Note zero return @[0], not @[]
   assert n >= 0
   if n == 0: return @[0]
   var t = n

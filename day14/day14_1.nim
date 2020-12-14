@@ -20,7 +20,7 @@ proc main() =
       # extract 0
       maskAnd = ss[2].replace("X", "1").parseBinInt
       echo "mask ", maskOr.toBin(36), " ", maskAnd.toBin(36)
-    elif line.startsWIth("mem"):
+    elif line.startsWith("mem"):
       var x, y: int
       assert scanf(line, "mem[$i] = $i", x, y)
       mem[x] = (y and maskAnd) or maskOr
