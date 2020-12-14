@@ -169,7 +169,8 @@ proc modpow*(x, p, m: int): int =
 
 proc linearCongruence*(a, b, m: int): (int, int) =
   # solve x for a*x = b (mod m)
-  # x = r (mod d) where r, d = congruence(a,b,m)
+  # a, m do not need to coprime
+  # x = r (mod d) where (r, d) = congruence(a,b,m)
   # postcondition:
   # r in 0..d-1
   # d > 0
