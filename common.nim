@@ -255,6 +255,22 @@ iterator integerPartition*(n: int): seq[int] =
       y = x + y - 1
       yield a[0 .. k]
 
+iterator chunked*[T](s: openArray[T], size: int): seq[T] =
+  # [0..<size], [size..<2*size] ...
+  # the length of last result = s.len mod size
+  var i = 0
+  while i < s.len:
+    yield s[i ..< min(s.len, i+size)]
+    i += size
+
+iterator windowed*[T](s: openArray[T], size: int, step: int = 1): seq[T] =
+  # moving windows [0..<size], [step..<size+step], ...
+  # result.len always equal to size
+  var i = 0
+  while i + size <= len(s):
+    yield s[i ..< i+size]
+    i += step
+
 # -------------------------------------------------------------
 # openArray
 
