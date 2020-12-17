@@ -56,8 +56,37 @@ proc main() =
   # echo s
   echo s.map(s => s.map(s => s.map(x => x.count('#') ).sum ).sum ).sum
 
+proc main2() =
+  var input = readFile(inputFilePath).strip.split("\n").map(s => s.toSeq)
+  var space: HashSet[seq[int]]
+
+  forProd i, j in input.slice, input[0].slice:
+    if input[i][j] == '#':
+      space.incl @[i,j,0,0]
+
+  for r in 1..6:
+    var space2: HashSet[seq[int]]
+    forProd i,j,k,l in -r .. input.high + r, -r .. input[0].high + r, -r .. r, -r..r:
+      let p = @[i,j,k,l]
+
+      var n = 0
+      for nei in neis:
+        let p0 = p + nei
+        if p0 in space:
+          n += 1
+
+      if p in space:
+        if n in [2,3]: space2.incl p
+      else:
+        if n == 3: space2.incl p
+    space = space2
+
+  echo space.len
+  
+
 when isMainModule:
   forProd i, j, k, l in [-1,0,1], [-1,0,1], [-1,0,1], [-1,0,1]:
     if (i,j,k,l) == (0,0,0,0): continue
     neis.add @[i,j,k,l]
   main()
+  main2()
