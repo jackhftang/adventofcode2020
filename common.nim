@@ -18,6 +18,22 @@ proc abort*(xs: varargs[string, `$`]) =
   # shorter raise exception
   raise newException(ValueError, xs.join(" "))
 
+type
+  StringEncoder* = object
+    seed: int
+    en: Table[string, int]
+    de: seq[string]
+
+proc encode*(encoder: var StringEncoder, s: string): int =
+  if s notin encoder.en: 
+    encoder.en[s] = encoder.seed
+    encoder.de.add s
+    encoder.seed.inc
+  return encoder.en[s]
+
+proc decode*(encoder: StringEncoder, n: int): string =
+  encoder.de[n]
+
 
 # -------------------------------------------------------------
 # string
@@ -860,7 +876,6 @@ macro forZip*(args: varargs[untyped]): untyped =
 # -------------------------------------------------------------
 # geometry
 
-
 const nei4* = [
   # positive toward left and bottom
     # [y, x]
@@ -910,3 +925,30 @@ proc rotateRad*[T: SomeFloat](z: Complex[T], rad: T): Complex[T] =
 proc rotateDeg*[T: SomeFloat](z: Complex[T], deg: T): Complex[T] =
   ## rotate rad anti-clockwise
   rotateRad(deg*PI/180.0)
+
+# -------------------------------------------------------------
+# graph
+
+proc bipartile*(graph: seq[seq[int]]): (int, seq[int]) =
+  let n = graph.len
+  var match = newSeqWith(n, -1)
+  var avail = newSeqWith(n, true)
+
+  proc dfs(v: int): bool =
+    avail[v] = false
+    for u in graph[v]:
+      let m = match[u]
+      if m == -1 or avail[m] and dfs(m):
+        match[v] = u
+        match[u] = v
+        return true
+    return false
+  
+  var cnt = 0
+  for i in 0..<n:
+    if match[i] == -1:
+      avail.fill(true)
+      if dfs(i):
+        cnt.inc
+
+  return (cnt, match)
