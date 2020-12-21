@@ -966,7 +966,13 @@ proc initMaxFlowGraph*[T: SomeNumber](len: int): MaxFlowGraph[T] =
   newSeqWith(len, newSeq[MaxFlowEdge[T]]())
 
 proc `$`*[T: SomeNumber](graph: MaxFlowGraph[T]): string =
-  graph.map(x => $x).join("\n")
+  result.add "MaxFlowGraph\n"
+  for i, edges in graph:
+    result.add ($i).align(6, ' ')
+    result.add ':'
+    for e in edges:
+      result.add fmt" ({e.to},{e.cap})"
+    result.add '\n'
 
 proc addEdge*[T: SomeNumber](graph: var MaxFlowGraph[T], src, dst: int, cap: T) =
   graph[src].add(MaxFlowEdge[T](to: dst, rev: graph[dst].len, cap: cap))
@@ -990,6 +996,7 @@ proc maxFlowBfs[T](graph: var MaxFlowGraph[T], level: var seq[int], s, t: int) =
 
 proc maxFlowDfs[T](graph: var MaxFlowGraph[T], level: seq[int],
     visited: var seq[int], v, t: int, flow: T): T =
+  # push flow from v to t
   if v == t:
     return flow
 
@@ -1006,10 +1013,23 @@ proc maxFlowDfs[T](graph: var MaxFlowGraph[T], level: seq[int],
   return T(0)
 
 proc maxFlow*[T: SomeNumber](graph: var MaxFlowGraph[T], s, t: int): T =
+  runnableExamples:
+    # https://en.wikipedia.org/wiki/Dinic's_algorithm#Example
+    var g = initMaxFlowGraph[int](6)
+    g.addEdge(0, 1, 10)
+    g.addEdge(0, 2, 10)
+    g.addEdge(1, 2, 2)
+    g.addEdge(1, 3, 4)
+    g.addEdge(1, 4, 8)
+    g.addEdge(2, 4, 9)
+    g.addEdge(3, 5, 10)
+    g.addEdge(4, 3, 6)
+    g.addEdge(4, 5, 10)
+    assert maxflow(g, 0, 5) == 19
+
   let n = graph.len
   var level = newSeq[int](n)
   var visited = newSeq[int](n)
-
   while true:
     graph.maxFlowBfs(level, s, t)
     if level[t] == -1:
@@ -1020,5 +1040,7 @@ proc maxFlow*[T: SomeNumber](graph: var MaxFlowGraph[T], s, t: int): T =
     visited.fill(0)
     while true:
       let f = graph.maxFlowDfs(level, visited, s, t, T.high)
-      if f == T(0): break
+      if f == T(0):
+        # to track back, start from dst and BFS to down by one level, the cap is the flow
+        break
       result += f
