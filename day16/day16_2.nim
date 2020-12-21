@@ -42,8 +42,7 @@ proc main() =
     for j, r in rules:
       if tickets.all(x => x[i] in r[1] or x[i] in r[2] ):
         colToRules[i].add j
-
-  # special structure...
+        
   echo colToRules
   echo colToRules.map(x => x.len).prod
   echo colToRules.sorted((a,b) => a.len - b.len)
@@ -68,5 +67,39 @@ proc main() =
 
   echo ans
 
+proc main2() = 
+  var input = readFile(inputFilePath).strip.split("\n\n")
+  var rules = input[0].strip.splitLines.map(parseRule)
+  let my = input[1].strip.splitLines[1].split(",").map(parseInt)
+  let nb = input[2].strip.splitLines[1..^1].map(s => s.split(",").map(parseInt))
+
+  # find valid tickets
+  var tickets: seq[seq[int]]
+  for t in nb:
+    block check:
+      for n in t: 
+        if not isValid(rules, n):
+          break check
+      # valid
+      tickets.add t
+
+  var graph = newSeqWith(rules.len * 2, newSeq[int]())
+  for k, rule in rules:
+    for i in 0 ..< tickets[0].len:
+      if tickets.all(t => t[i] in rule[1] or t[i] in rule[2]):
+        let j = i + rules.len
+        graph[k].add j
+        graph[j].add k
+  let (nMatch, matches) = bipartile(graph)
+  assert nMatch == rules.len
+
+  var ans = 1
+  for i in 0 ..< rules.len:
+    if rules[matches[rules.len + i]][0].startsWith("departure"): 
+      ans *= my[i]
+
+  echo ans
+
 when isMainModule:
   main()
+  main2()
