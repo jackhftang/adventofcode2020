@@ -25,7 +25,7 @@ type
     de: seq[string]
 
 proc encode*(encoder: var StringEncoder, s: string): int =
-  if s notin encoder.en: 
+  if s notin encoder.en:
     encoder.en[s] = encoder.seed
     encoder.de.add s
     encoder.seed.inc
@@ -98,26 +98,26 @@ proc sqrt*(x: int): int =
     let t2 = (t + (x div t)) div 2
     if t2 >= t: break
     t = t2
-  result = t 
+  result = t
 
-proc quadraticRoots*(a,b,c: int): HashSet[int] =
+proc quadraticRoots*(a, b, c: int): HashSet[int] =
   # find all roots of x such that a*x^2 + b*x + c = 0
   # throw error if there are infinite roots
   if a == 0:
     if b == 0:
-      if c == 0: 
+      if c == 0:
         raise newException(ValueError, "infinite roots")
     else:
       if c mod b == 0:
         result.incl (-c div b)
   else:
     let t = b*b - 4 * a * c
-    if t < 0: 
+    if t < 0:
       # only real number roots
       return
 
     let t2 = sqrt(t)
-    if t2*t2 != t: 
+    if t2*t2 != t:
       # not a integer square
       return
 
@@ -203,11 +203,11 @@ proc linearCongruence*(congruences: seq[(int, int, int)]): (int, int) =
   # system of linear congruence
   var r = 0
   var d = 1
-  for (a,b,m) in congruences:
-    let (r1,d1) = linearCongruence(a*d, b-a*r, m)
+  for (a, b, m) in congruences:
+    let (r1, d1) = linearCongruence(a*d, b-a*r, m)
     r += r1 * d
     d *= d1
-  result = (r,d)
+  result = (r, d)
 
 # -------------------------------------------------------------
 # Combinatorics
@@ -943,7 +943,7 @@ proc bipartile*(graph: seq[seq[int]]): (int, seq[int]) =
         match[u] = v
         return true
     return false
-  
+
   var cnt = 0
   for i in 0..<n:
     if match[i] == -1:
@@ -952,3 +952,73 @@ proc bipartile*(graph: seq[seq[int]]): (int, seq[int]) =
         cnt.inc
 
   return (cnt, match)
+
+type
+  MaxFlowGraph*[T: SomeNumber] =
+    seq[seq[MaxFlowEdge[T]]]
+
+  MaxFlowEdge*[T: SomeNumber] = object
+    to*: int  # to node index
+    rev*: int #  reverse node adjacent index
+    cap*: T
+
+proc initMaxFlowGraph*[T: SomeNumber](len: int): MaxFlowGraph[T] =
+  newSeqWith(len, newSeq[MaxFlowEdge[T]]())
+
+proc `$`*[T: SomeNumber](graph: MaxFlowGraph[T]): string =
+  graph.map(x => $x).join("\n")
+
+proc addEdge*[T: SomeNumber](graph: var MaxFlowGraph[T], src, dst: int, cap: T) =
+  graph[src].add(MaxFlowEdge[T](to: dst, rev: graph[dst].len, cap: cap))
+  graph[dst].add(MaxFlowEdge[T](to: src, rev: graph[src].len-1, cap: T(0)))
+
+proc maxFlowBfs[T](graph: var MaxFlowGraph[T], level: var seq[int], s, t: int) =
+  level.fill(-1)
+
+  var q = initDeque[int]()
+  level[s] = 0
+  q.addLast s
+  while q.len > 0:
+    let m = q.popFirst()
+    for e in graph[m]:
+      if level[e.to] != -1 or e.cap == T(0):
+        continue
+      level[e.to] = level[m] + 1
+      if e.to == t:
+        return
+      q.addLast e.to
+
+proc maxFlowDfs[T](graph: var MaxFlowGraph[T], level: seq[int],
+    visited: var seq[int], v, t: int, flow: T): T =
+  if v == t:
+    return flow
+
+  while visited[v] < graph[v].len:
+    let e = graph[v][visited[v]]
+    if e.cap > T(0) and level[e.to] == level[v] + 1:
+      let d = maxFlowDfs(graph, level, visited, e.to, t, min(flow, e.cap))
+      if d > T(0):
+        graph[v][visited[v]].cap -= d
+        graph[e.to][e.rev].cap += d
+        return d
+    visited[v] += 1
+
+  return T(0)
+
+proc maxFlow*[T: SomeNumber](graph: var MaxFlowGraph[T], s, t: int): T =
+  let n = graph.len
+  var level = newSeq[int](n)
+  var visited = newSeq[int](n)
+
+  while true:
+    graph.maxFlowBfs(level, s, t)
+    if level[t] == -1:
+      # cannot reach dst
+      return
+
+    # push flow
+    visited.fill(0)
+    while true:
+      let f = graph.maxFlowDfs(level, visited, s, t, T.high)
+      if f == T(0): break
+      result += f
