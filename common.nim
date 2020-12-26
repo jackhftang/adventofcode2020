@@ -878,18 +878,30 @@ macro forZip*(args: varargs[untyped]): untyped =
 
 const nei4* = [
   # positive toward left and bottom
-    # [y, x]
-    # in anti-clockwise order
+  # [y, x]
+  # in anti-clockwise order
   @[0, 1], # E
   @[-1, 0], # N
   @[0, -1], # W
   @[1, 0], # S
 ]
 
+const nei6* = [
+  # Axial Coordinates
+  # positive toward left and bottom
+  # in anti-clockwise order
+  @[1,0],
+  @[1,-1],
+  @[0,-1],
+  @[-1,0],
+  @[-1,1],
+  @[0,1],
+]
+
 const nei8* = [
   # positive toward left and bottom
-    # [y, x]
-    # in anti-clockwise order
+  # [y, x]
+  # in anti-clockwise order
   @[0, 1],
   @[-1, 1],
   @[-1, 0],
@@ -929,7 +941,7 @@ proc rotateDeg*[T: SomeFloat](z: Complex[T], deg: T): Complex[T] =
 # -------------------------------------------------------------
 # graph
 
-proc bipartile*(graph: seq[seq[int]]): (int, seq[int]) =
+proc bipartite*(graph: seq[seq[int]]): (int, seq[int]) =
   let n = graph.len
   var match = newSeqWith(n, -1)
   var avail = newSeqWith(n, true)

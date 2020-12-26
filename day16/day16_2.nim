@@ -90,7 +90,7 @@ proc main2() =
         let j = i + rules.len
         graph[k].add j
         graph[j].add k
-  let (nMatch, matches) = bipartile(graph)
+  let (nMatch, matches) = bipartite(graph)
   assert nMatch == rules.len
 
   var ans = 1

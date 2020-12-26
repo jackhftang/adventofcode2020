@@ -39,8 +39,8 @@ proc main2() =
       graph[m].add n
       graph[n].add m
 
-  # solve bipartile matching
-  let (cnt, match) = bipartile(graph)
+  # solve bipartite matching
+  let (cnt, match) = bipartite(graph)
   assert cnt == allb.len
 
   # decode
