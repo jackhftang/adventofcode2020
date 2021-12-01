@@ -34,6 +34,15 @@ proc encode*(encoder: var StringEncoder, s: string): int =
 proc decode*(encoder: StringEncoder, n: int): string =
   encoder.de[n]
 
+proc `[]`*(slice: HSlice[int, int], n: int): int =
+  ## make integer HSlice more like a virtual array and indexable.
+  runnableExamples:
+    let xs = 1..3
+    assert xs[0] == 1
+    assert xs[1] == 2
+  if slice.a + n > slice.b:
+    raise newException(IndexDefect, "out of bound")
+  slice.a + n
 
 # -------------------------------------------------------------
 # string
@@ -802,8 +811,8 @@ macro forZip*(args: varargs[untyped]): untyped =
   ##      lis1 = [1,2,3]
   ##      lis2 = "abc"
   ##    for ix in 0 ..< l:
-  ##      let i = sym1[ix]
-  ##      let j = sym2[ix]
+  ##      let i = lis1[ix]
+  ##      let j = lis2[ix]
   ##      echo i, j
   ##
   var i = 0
