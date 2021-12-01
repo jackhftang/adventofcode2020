@@ -380,18 +380,19 @@ proc count*[T](xs: openArray[T], test: proc(t: T): bool): int =
       result.inc()
 
 proc indexes*[T](xs: openArray[T], v: T): seq[int] =
-  # return the index that equal to v (similar to find, but find all)
+  ## return the index that equal to v (similar to find, but find all)
   for i, x in xs:
     if x == v:
       result.add i
 
 proc indexes*[T](xs: openArray[T], test: proc(t: T): bool): seq[int] =
-  # return the all index that satisfy `test`
+  ## return the all index that satisfy `test`
   for i, x in xs:
     if test(x):
       result.add i
 
 proc find*[T](xs: openArray[T], test: proc(t: T): bool): int =
+  ## return the first index that satisfy test
   result = -1
   for i, x in xs:
     if test(x):
