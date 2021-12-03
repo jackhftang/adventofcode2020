@@ -13,10 +13,8 @@ proc main(inputFilename: string) =
       x += n
       y += aim * n
     of "down": 
-      # y += n
       aim += n
     of "up": 
-      # y -= n
       aim -= n
     echo x, " ", y, " ", aim
   echo x * y

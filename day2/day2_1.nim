@@ -11,7 +11,7 @@ proc main(inputFilename: string) =
     of "forward": x += n
     of "down": y += n
     of "up": y -= n
-  echo x, " ", y
+    echo x, " ", y
   echo x * y
   
 
