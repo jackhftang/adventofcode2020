@@ -2,7 +2,7 @@ import ../common
 
 proc main(inputFilename: string) =
   let rawInput = readFile(currentSourcePath.parentDir / inputFilename).strip 
-  var input = rawInput.splitLines.mapIt(toSeq(it).mapIt(parseInt($it)))
+  var input = rawInput.splitLines.mapIt(it.split("").mapIt(parseInt($it)))
   let l = input.len
   var a = 0
   var b = 0

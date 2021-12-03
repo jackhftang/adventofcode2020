@@ -1,7 +1,9 @@
 import sequtils, sets, deques, heapqueue, strformat, strutils, strscans,
     math, options, sugar, algorithm, random, lists, complex
-export sequtils, sets, deques, heapqueue, strformat, strutils, strscans,
+export sequtils, sets, deques, heapqueue, strformat, strscans,
     math, options, sugar, algorithm, random, lists, complex
+
+export strutils except split
 
 import tables except indexBy
 export tables except indexBy
@@ -53,6 +55,16 @@ proc toCountTable*(s: string): CountTable[char] =
 
 proc toHashSet*(s: string): HashSet[char] =
   for c in s: result.incl(c)
+
+
+proc split*(s, sep: string): seq[string] =
+  # wrap strutils.split to make s.split("") works
+  if sep.len == 0: 
+    result = newSeq[string](s.len)
+    for i, c in s:
+      result[i] = $c
+  else: 
+    result = strutils.split(s, sep)
 
 # -------------------------------------------------------------
 # control flow
@@ -511,7 +523,9 @@ template foldlSeq*(xs, body: untyped): untyped =
       result[i] = body
   result
 
-iterator transpose*[T](xs: openArray[seq[T]]): seq[T] =
+proc transpose*[T](xs: openArray[seq[T]], default: T = T(0)): seq[seq[T]] =
+  ## return a new transposed matrix
+  ## If the xs is not full, the hole will be filled with zeros.
   let m = xs.len
   if m > 0:
     var n = xs[0].len
@@ -525,7 +539,9 @@ iterator transpose*[T](xs: openArray[seq[T]]): seq[T] =
       for j in 0 ..< m:
         if i < xs[j].len:
           s[j] = xs[j][i]
-      yield s
+        else:
+          s[j] = default
+      result.add s
 
 template vectorize*(f, T: untyped): untyped =
   ## make a unary operation applicable over seq[T]
