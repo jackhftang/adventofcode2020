@@ -606,6 +606,22 @@ vectorize(`-`, float, float)
 vectorize(`*`, float, float)
 vectorize(`/`, float, float)
 
+proc arange*(s, e: int, step: int = 1): seq[int] =
+  ## similar to toSeq(s..e), but half inclusive and controllable step 
+  var i = s
+  while i < e:
+    result.add i
+    i += step
+
+proc linspace*(s, e: float, nPart: int): seq[float] =
+  ## return an arithmetic sequence of len `nPart` 
+  ## with first element equal to `s` and last element equal to `e`
+  result = newSeq[float](nPart)
+  result[0] = s
+  for i in 1 .. nPart-2:
+    result[i] = s + i.float*(e-s)/(nPart-1).float
+  result[nPart-1] = e
+  
 # -------------------------------------------------------------
 # HashSet
 
