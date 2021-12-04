@@ -956,7 +956,7 @@ macro forZip*(args: varargs[untyped]): untyped =
 # geometry
 
 const nei4* = [
-  # positive toward left and bottom
+  # positive toward right and bottom
   # [y, x]
   # in anti-clockwise order
   @[0, 1], # E
@@ -967,18 +967,22 @@ const nei4* = [
 
 const nei6* = [
   # Axial Coordinates
-  # positive toward left and bottom
+  # positive toward right and bottom
+  # [y, x]
   # in anti-clockwise order
-  @[1,0],
-  @[1,-1],
-  @[0,-1],
-  @[-1,0],
-  @[-1,1],
+  #    (-1,-1)  (-1, 0)
+  # ( 0,-1) ( 0, 0) ( 0, 1)
+  #     ( 1, 0) ( 1, 1)  
   @[0,1],
+  @[-1,0],
+  @[-1,-1],
+  @[0,-1],
+  @[1,0],
+  @[1,1],
 ]
 
 const nei8* = [
-  # positive toward left and bottom
+  # positive toward right and bottom
   # [y, x]
   # in anti-clockwise order
   @[0, 1],
