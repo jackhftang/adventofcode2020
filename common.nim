@@ -617,6 +617,12 @@ vectorize(`-`, float, float)
 vectorize(`*`, float, float)
 vectorize(`/`, float, float)
 
+proc arange*(n: int): seq[int] =
+  var i = 0
+  while i < n:
+    result.add i
+    i += 1
+
 proc arange*(s, e: int, step: int = 1): seq[int] =
   ## similar to toSeq(s..e), but half inclusive and controllable step 
   var i = s
@@ -632,6 +638,29 @@ proc linspace*(s, e: float, nPart: int): seq[float] =
   for i in 1 .. nPart-2:
     result[i] = s + i.float*(e-s)/(nPart-1).float
   result[nPart-1] = e
+
+macro zeros*(args: varargs[untyped]): untyped =
+  runnableExamples:
+    let m = zeros(2,3)
+    assert m == @[@[0,0,0], @[0,0,0]]
+    
+  assert args.len > 0, "must be at least one dimension"
+  result = nnkCall.newTree(
+    nnkBracketExpr.newTree(
+      "newSeq".ident,
+      "int".ident
+    ),
+    args[args.len - 1]
+  )
+
+  var n = args.len - 2
+  while n >= 0:
+    result = nnkCall.newTree(
+      "newSeqWith".ident,
+      args[n],
+      result
+    )
+    n -= 1
   
 # -------------------------------------------------------------
 # iterable 

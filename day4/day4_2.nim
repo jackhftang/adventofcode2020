@@ -6,7 +6,7 @@ proc main(inputFilename: string) =
   let xs = input[0].split(",").mapIt(parseInt(it))
 
   var ys: seq[seq[seq[int]]]
-  for ws in input[1..^1].windowed(6, 6):
+  for ws in input[1..^1].chunked(6):
     #echo ws
     var m = newSeqWith(5, newSeq[int](5))
     for i in 1..5:
@@ -15,7 +15,7 @@ proc main(inputFilename: string) =
     ys.add m
 
   let n = ys.len
-  var marks = newSeqWith(n, newSeqWith(5, newSeq[int](5)))
+  var marks = zeros(n, 5, 5)
   var wins = initHashSet[int]()
   for x in xs:
     forProd i, j, k in 0 ..< n, 0..4, 0..4:
