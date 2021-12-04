@@ -56,7 +56,6 @@ proc toCountTable*(s: string): CountTable[char] =
 proc toHashSet*(s: string): HashSet[char] =
   for c in s: result.incl(c)
 
-
 proc split*(s, sep: string): seq[string] =
   # wrap strutils.split to make s.split("") works
   if sep.len == 0: 
@@ -121,16 +120,17 @@ proc sqrt*(x: int): int =
     t = t2
   result = t
 
-proc quadraticRoots*(a, b, c: int): HashSet[int] =
-  # find all roots of x such that a*x^2 + b*x + c = 0
-  # throw error if there are infinite roots
+proc quadraticRoots*(a, b, c: int): seq[int] =
+  ## find all integer roots of x such that a*x^2 + b*x + c = 0
+  ## return empty seq if there are no roots
+  ## throw error if there are infinite roots
   if a == 0:
     if b == 0:
       if c == 0:
         raise newException(ValueError, "infinite roots")
     else:
       if c mod b == 0:
-        result.incl (-c div b)
+        result.add (-c div b)
   else:
     let t = b*b - 4 * a * c
     if t < 0:
@@ -145,12 +145,22 @@ proc quadraticRoots*(a, b, c: int): HashSet[int] =
     let x1 = -b + t2
     let x2 = -b - t2
     if x1 mod (2*a) == 0:
-      result.incl (x1 div (2*a))
+      result.add (x1 div (2*a))
     if x2 mod (2*a) == 0:
-      result.incl (x2 div (2*a))
+      result.add (x2 div (2*a))
+
+proc quadraticRoots*(a,b,c: float): seq[float] =
+  ## find all real roots of x such that a*x^2 + b*x + c = 0
+  let t = b*b - 4*a*c
+  if t < 0:
+    return 
+  let t2 = sqrt(t)
+  result.add (-b - t2)/a/2
+  result.add (-b + t2)/a/2
 
 proc digits*(n: int, base = 10): seq[int] =
-  # Note zero return @[0], not @[]
+  ## the first digit is the least significant 
+  ## Note zero return @[0], not @[]
   assert n >= 0
   if n == 0: return @[0]
   var t = n
@@ -159,6 +169,7 @@ proc digits*(n: int, base = 10): seq[int] =
     t = t div base
 
 proc fromDigits*(ds: seq[int], base = 10): int =
+  ## the first digit is the least significant
   var b = 1
   for d in ds:
     result += d * b
@@ -623,13 +634,18 @@ proc linspace*(s, e: float, nPart: int): seq[float] =
   result[nPart-1] = e
   
 # -------------------------------------------------------------
+# iterable 
+
+# -------------------------------------------------------------
 # HashSet
 
 proc toCountTable*[T](hs: SomeSet[T]): CountTable[T] =
+  ## toCountTable for SomeSet, though count should be 1
   for x in hs:
     result.inc(x)
 
 proc filter*[T](hs: SomeSet[T], f: proc(t: T): bool): HashSet[T] =
+  ## make filter work on HashSet
   for e in hs:
     if f(e):
       result.incl e
@@ -667,9 +683,14 @@ proc filter*[K, V](t: Table[K, V], f: proc(k: K, v: V): bool): Table[K, V] =
       result[k] = e
 
 proc inversed*[K, V](t: Table[K, V]): Table[V, K] =
-  ## Swap the Keys and values, inverse of bijective function
+  ## Swap the Keys and values.
+  ## If the table is not bijective, any one value will the key
   for k, v in t:
     result[v] = k
+
+proc multiInvsersed*[K, V](t: Table[K, V]): Table[V, seq[K]] =
+  for k, v in t:
+    result[v].add k 
 
 # -------------------------------------------------------------
 # CountTable
@@ -714,6 +735,22 @@ proc filter*[T](t: CountTable[T], f: proc(k: T, n: int): bool): CountTable[T] =
     if f(k, e):
       result[k] = e
 
+proc largests*[T](t: CountTable[T]): tuple[keys: seq[T], val: int] =
+  for k, v in t:
+    if v > result.val:
+      result.keys = @[k]
+      result.val = v
+    elif v == result.val:
+      result.keys.add k
+
+proc smallests*[T](t: CountTable[T]): tuple[keys: seq[T], val: int] =
+  # smallest non-zero count
+  for k, v in t:
+    if v < result.val or result.val == 0:
+      result.keys = @[k]
+      result.val = v
+    elif v == result.val:
+      result.keys.add k
 # -------------------------------------------------------------
 # macros
 
@@ -984,11 +1021,22 @@ proc rotateDeg*[T: SomeFloat](z: Complex[T], deg: T): Complex[T] =
 # graph
 
 proc bipartite*(graph: seq[seq[int]]): (int, seq[int]) =
+  ## specialized version of maxFlow for bipartile matching O(n^2)
+  ## (i, match[i]) are the pair of match. -1 means no match 
+  runnableExamples:
+    # 0 --> 2
+    # 0 --> 3
+    # 1 --> 3
+    var g: seq[seq[int]]
+    g[0].add [2,3]
+    g[1].add [2]
+    assert bipartite(g) == (2, @[3,2,1,0])
   let n = graph.len
   var match = newSeqWith(n, -1)
   var avail = newSeqWith(n, true)
 
   proc dfs(v: int): bool =
+    # return true if found a match
     avail[v] = false
     for u in graph[v]:
       let m = match[u]
