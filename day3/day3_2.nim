@@ -14,8 +14,7 @@ proc o1(input: seq[seq[int]]): int =
       curr = curr.filter(lis => lis[i] == 0)
 
   echo curr
-  for x in curr[0]:
-    result = 2*result + x
+  result = curr[0].reversed.fromDigits(2)
 
 proc o2(input: seq[seq[int]]): int =
   var curr = input
@@ -31,8 +30,7 @@ proc o2(input: seq[seq[int]]): int =
       curr = curr.filter(lis => lis[i] == 1)
 
   echo curr
-  for x in curr[0]:
-    result = 2*result + x
+  result = curr[0].reversed.fromDigits(2)
 
 proc main(inputFilename: string) =
   let rawInput = readFile(currentSourcePath.parentDir / inputFilename).strip 
