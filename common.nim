@@ -332,7 +332,8 @@ proc pairToTable*[T](xs: openArray[T]): Table[T, T] =
     i += 2
 
 proc slice*[T](xs: openArray[T]): Slice[int] {.inline.} =
-  # useful to check bound and iteration
+  # useful to check bound
+  # more convenient then writing 0 ..< xs.len
   runnableExamples:
     let xs = toSeq(1..100)
     for i in xs.slice:
@@ -617,6 +618,11 @@ vectorize(`-`, float, float)
 vectorize(`*`, float, float)
 vectorize(`/`, float, float)
 
+proc dot*[T](xs, ys: openArray[T]): T =
+  assert xs.len == ys.len
+  for i in xs.low .. xs.high:
+    result += xs[i] * ys[i]
+
 proc arange*(n: int): seq[int] =
   runnableExamples:
     assert arange(3) == @[0,1,2]
@@ -683,7 +689,7 @@ macro zeros*(args: varargs[untyped]): untyped =
       result
     )
     n -= 1
-  
+
 # -------------------------------------------------------------
 # iterable 
 
