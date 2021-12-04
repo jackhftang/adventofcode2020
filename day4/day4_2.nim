@@ -22,8 +22,8 @@ proc main(inputFilename: string) =
       if ys[i][j][k] == x:
         marks[i][j][k] = 1
     forProd i, j in 0 ..< n, 0..4:
-      let b1 = toSeq(0..4).mapIt(marks[i][j][it]).sum == 5 
-      let b2 = toSeq(0..4).mapIt(marks[i][it][j]).sum == 5
+      let b1 = arange(5).mapIt(marks[i][j][it]).sum == 5 
+      let b2 = arange(5).mapIt(marks[i][it][j]).sum == 5
       if b1 or b2:
         wins.incl i
         if wins.len == n:
@@ -35,5 +35,5 @@ proc main(inputFilename: string) =
           return
 
 when isMainModule:
+  main("day4_sample1.txt")
   main("day4_input.txt")
-  # main("day4_sample1.txt")

@@ -27,5 +27,5 @@ proc main(inputFilename: string) =
         return
 
 when isMainModule:
+  main("day4_sample1.txt")
   main("day4_input.txt")
-  # main("day4_sample1.txt")

@@ -618,6 +618,8 @@ vectorize(`*`, float, float)
 vectorize(`/`, float, float)
 
 proc arange*(n: int): seq[int] =
+  runnableExamples:
+    assert arange(3) == @[0,1,2]
   var i = 0
   while i < n:
     result.add i
@@ -638,6 +640,26 @@ proc linspace*(s, e: float, nPart: int): seq[float] =
   for i in 1 .. nPart-2:
     result[i] = s + i.float*(e-s)/(nPart-1).float
   result[nPart-1] = e
+
+macro tensor*(typ: untyped, args: varargs[untyped]): untyped =
+  ## convenient function to initialize nested sequece of typ
+  assert args.len > 0, "must be at least one dimension"
+  result = nnkCall.newTree(
+    nnkBracketExpr.newTree(
+      "newSeq".ident,
+      typ
+    ),
+    args[args.len - 1]
+  )
+
+  var n = args.len - 2
+  while n >= 0:
+    result = nnkCall.newTree(
+      "newSeqWith".ident,
+      args[n],
+      result
+    )
+    n -= 1
 
 macro zeros*(args: varargs[untyped]): untyped =
   runnableExamples:
