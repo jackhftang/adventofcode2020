@@ -36,6 +36,9 @@ proc encode*(encoder: var StringEncoder, s: string): int =
 proc decode*(encoder: StringEncoder, n: int): string =
   encoder.de[n]
 
+proc len*(encoder: StringEncoder): int =
+  encoder.de.len
+
 proc `[]`*(slice: HSlice[int, int], n: int): int =
   ## make integer HSlice more like a virtual array and indexable.
   runnableExamples:
@@ -306,14 +309,6 @@ iterator integerPartition*(n: int): seq[int] =
       y = x + y - 1
       yield a[0 .. k]
 
-iterator chunked*[T](s: openArray[T], size: int): seq[T] =
-  # [0..<size], [size..<2*size] ...
-  # the length of last result = s.len mod size
-  var i = 0
-  while i < s.len:
-    yield s[i ..< min(s.len, i+size)]
-    i += size
-
 iterator windowed*[T](s: openArray[T], size: int, step: int = 1): seq[T] =
   # moving windows [0..<size], [step..<size+step], ...
   # result.len always equal to size
@@ -321,6 +316,15 @@ iterator windowed*[T](s: openArray[T], size: int, step: int = 1): seq[T] =
   while i + size <= len(s):
     yield s[i ..< i+size]
     i += step
+
+iterator chunked*[T](s: openArray[T], size: int): seq[T] =
+  # [0..<size], [size..<2*size] ...
+  # the length of last result = s.len mod size
+  # equivalent to windowed(s, size, size) 
+  var i = 0
+  while i < s.len:
+    yield s[i ..< min(s.len, i+size)]
+    i += size
 
 # -------------------------------------------------------------
 # openArray
@@ -1167,6 +1171,94 @@ proc rotateDeg*[T: SomeFloat](z: Complex[T], deg: T): Complex[T] =
 
 # -------------------------------------------------------------
 # graph
+
+proc shortestPath*(graph: seq[seq[int]], s, e: int): int =
+  # simplest form of graph, always with distance 1
+  var visited = newSeq[bool](graph.len)
+  var q: Deque[(int, int)] # (distance, node)
+  q.addLast (0, s)
+  while q.len > 0:
+    let p = q.popFirst()
+
+    if p[1] == e:
+      return p[0]
+
+    if visited[p[1]]: continue
+    else: visited[p[1]] = true
+
+    for i in graph[p[1]]:
+      if not visited[i]:
+        q.addLast (p[0] + 1, i)  
+    
+  return -1
+
+type
+  DijkstraEdge* = object
+    dest*, cost*: int 
+
+  DijkstraItem = ref object
+    dist: int
+    node: int
+    prev: DijkstraItem
+
+proc `<`(a, b: DijkstraItem): bool = a.dist < b.dist
+
+proc dijkstra*(graph: seq[seq[DijkstraEdge]], s, e: int): (int, seq[int]) =
+  var visited = newSeq[bool](graph.len)
+  var h: HeapQueue[DijkstraItem]
+  h.push DijkstraItem(node: s)
+  while h.len > 0:
+    var p = h.pop()
+
+    if p.node == e:
+      result[0] = p.dist
+      while not p.isNil:
+        result[1].add p.node
+        p = p.prev
+      return 
+
+    if visited[p.node]: continue
+    else: visited[p.node] = true
+
+    for i in graph[p.node]:
+      if not visited[i.dest]:
+        h.push DijkstraItem(dist: p.dist + i.cost, node: i.dest, prev: p)
+
+  result[0] = -1
+
+proc floydWarshall*(distanceMatrix: seq[seq[int]]): seq[seq[int]]=
+  ## all-to-all shortest path
+  ## if no path reachable, the distance is -1
+
+  let n = distanceMatrix.len
+  for lis in distanceMatrix:
+    assert lis.len == n, "distanceMatrix must be square matrix"
+  
+  result = newSeqWith(n, newSeqWith(n, -1))
+  for i in 0 ..< n:
+    for j in 0 ..< n:
+      for k in 0 ..< n:
+        if result[j][i] != -1 and result[i][k] != -1:
+          let n = result[j][i] + result[i][k]
+          if result[j][k] == -1:
+            result[j][k] = n
+          else:
+            result[j][k] = min(result[j][k], n)
+
+type
+  BellmanFordEdge* = object
+    src*, dest*, cost*: int
+
+proc bellmanFord*(edges: seq[BellmanFordEdge], nNode, s: int): seq[int] =
+  result = newSeqWith[int](nNode, -1)
+  for _ in 1 .. nNode-1:
+    for e in edges:
+      if result[e.src] == -1: 
+        continue
+      if result[e.dest] == -1:
+        result[e.dest] = result[e.src] + e.cost
+      else:
+        result[e.dest] = min(result[e.dest], result[e.src] + e.cost)
 
 proc bipartite*(graph: seq[seq[int]]): (int, seq[int]) =
   ## specialized version of maxFlow for bipartile matching O(n^2)
