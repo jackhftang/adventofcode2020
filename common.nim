@@ -478,27 +478,27 @@ proc find*[T](xs: openArray[T], test: proc(t: T): bool): int =
     if test(x):
       return i
 
-proc argmins*[T](xs: openArray[T]): seq[int] =
+proc argmins*[T](xs: openArray[T]): (seq[int], T) =
   if xs.len == 0: return
-  var v = xs[0]
-  result.add 0
+  result[1] = xs[0]
+  result[0].add 0
   for i in 1 .. xs.high:
-    if xs[i] < v:
-      result = @[i]
-      v = xs[i]
-    elif xs[i] == v:
-      result.add i
+    if xs[i] < result[1]:
+      result[0] = @[i]
+      result[1] = xs[i]
+    elif xs[i] == result[1]:
+      result[0].add i
 
-proc argmaxs*[T](xs: openArray[T]): seq[int] =
+proc argmaxs*[T](xs: openArray[T]): (seq[int], T) =
   if xs.len == 0: return
-  var v = xs[0]
-  result.add 0
+  result[1] = xs[0]
+  result[0].add 0
   for i in 1 .. xs.high:
-    if xs[i] > v:
-      result = @[i]
-      v = xs[i]
-    elif xs[i] == v:
-      result.add i
+    if xs[i] > result[1]:
+      result[0] = @[i]
+      result[1] = xs[i]
+    elif xs[i] == result[1]:
+      result[0].add i
 
 proc indexBy*[K, T](xs: openArray[T], group: proc(t: T): K): Table[K, T] =
   # one rank less than sequtils.indexBy for which compiler cannot infer auto types e.g. [(0,0)].indexBy(x => x[0])
@@ -794,10 +794,10 @@ proc intersection*[K,V1,V2,V](t1: Table[K, V1], t2: Table[K, V2], merge: proc(v1
     elif k2[j] < k1[i]:
       j += 1
 
-proc argmins*[K, V](t: Table[K,V]): tuple[keys: seq[K], v: V] =
+proc argmins*[K, V](t: Table[K,V]): (seq[K], V) =
   # equal to 
-  # result[1] = t.values.toseq.min
-  # result[0] = t.filter(v => v == mi).keys.toseq
+  # result[1] = t.toseq.min
+  # result[0] = t.filter(v => v == result[1]).keyseq
   var isFirst = true
   for k, v in t:
     if isFirst:
@@ -810,10 +810,10 @@ proc argmins*[K, V](t: Table[K,V]): tuple[keys: seq[K], v: V] =
       result[0] = @[k]
       result[1] = v
 
-proc argmaxs*[K, V](t: Table[K,V]): tuple[keys: seq[K], v: V] =
+proc argmaxs*[K, V](t: Table[K,V]): (seq[K], V) =
   # equal to 
-  # result[1] = t.values.toseq.min
-  # result[0] = t.filter(v => v == mi).keys.toseq
+  # result[1] = t.toseq.max
+  # result[0] = t.filter(v => v == result[1]).keyseq
   var isFirst = true
   for k, v in t:
     if isFirst:
