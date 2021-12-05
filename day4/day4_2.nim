@@ -15,7 +15,7 @@ proc main(inputFilename: string) =
     ys.add m
 
   let n = ys.len
-  var marks = zeros(n, 5, 5)
+  var marks = zeros(int, n, 5, 5)
   var wins = initHashSet[int]()
   for x in xs:
     forProd i, j, k in 0 ..< n, 0..4, 0..4:

@@ -9,7 +9,7 @@ proc main(inputFilename: string) =
     ys.add ws[1..^1].mapIt(it.strip.split(" ").filterIt(it.len != 0).map(parseInt))
 
   let n = ys.len
-  var marks = zeros(n, 5, 5)
+  var marks = zeros(int, n, 5, 5)
   for x in xs:
     # echo "x=", x
     forProd i, j, k in 0 ..< n, 0..4, 0..4:

@@ -49,6 +49,9 @@ proc `[]`*(slice: HSlice[int, int], n: int): int =
 # -------------------------------------------------------------
 # string
 
+proc toTable*(s: string): Table[int, char] =
+  for i, c in s: result[i] = c
+
 proc toCountTable*(s: string): CountTable[char] =
   # s.toSeq.toCountTable
   for c in s: result.inc(c)
@@ -107,7 +110,7 @@ proc logCeil*(x, base: int): int =
     t *= base
     result.inc
 
-proc sqrt*(x: int): int =
+proc sqrtFloor*(x: int): int =
   if x < 0: raise newException(ValueError, "Cannot sqrt negative number " & $x)
   if x == 0: return 0
   if x == 1: return 1
@@ -137,7 +140,7 @@ proc quadraticRoots*(a, b, c: int): seq[int] =
       # only real number roots
       return
 
-    let t2 = sqrt(t)
+    let t2 = sqrtFloor(t)
     if t2*t2 != t:
       # not a integer square
       return
@@ -373,8 +376,6 @@ macro zeros*(typ: typedesc, args: varargs[untyped]): untyped =
     )
     n -= 1
 
-# accessors
-
 proc bound*[T](xs: openArray[T]): Slice[int] {.inline.} =
   # useful to check bound
   # more convenient then writing 0 ..< xs.len
@@ -519,9 +520,9 @@ proc fold*[T](xs: openArray[T], f: proc(a, b: T): T): T {.inline.} =
   for i in 1..xs.high:
     result = f(result, xs[i])
 
-proc fold*[T](xs: openArray[T], init: T, f: proc(a, b: T): T): T {.inline.} =
+proc fold*[T, V](xs: openArray[V], init: T, f: proc(a: T, b: V): T): T {.inline.} =
   ## `proc` version of foldl
-  ## NOTE: the init is at second argument
+  ## NOTE: the init is the first argument
   if xs.len == 0: raise newException(ValueError, "Cannot fold empty array")
   result = init
   for x in xs:
@@ -722,6 +723,12 @@ proc filter*[T](hs: SomeSet[T], f: proc(t: T): bool): HashSet[T] =
 # -------------------------------------------------------------
 # Table
 
+proc keyseq*[K, V](t: Table[K, V]): seq[K] = t.keys.toseq
+
+proc valseq*[K, V](t: Table[K, V]): seq[V] = t.values.toseq
+
+proc toSeq*[K, V](t: Table[K, V]): seq[V] = t.values.toseq
+
 proc indexes*[K, V](t: Table[K, V], v: V): seq[K] =
   for k, e in t:
     if e == v:
@@ -741,6 +748,15 @@ proc map*[K, V, T](t: Table[K, V], f: proc(k: K, v: V): T): Table[K, T] =
   for k, e in t:
     result[k] = f(k, e)
 
+proc mapKey*[K, V, T](t: Table[K, V], f: proc(k: K): T): Table[T, V] = 
+  # if keys have conflict, one of them is chosen
+  for k, v in t:
+    result[f(k)] = v
+
+proc mapKey*[K, V, T](t: Table[K, V], f: proc(k: K, v: V): T): Table[T, V] =
+  for k, v in t:
+    result[f(k, v)] = v
+
 proc filter*[K, V](t: Table[K, V], f: proc(v: V): bool): Table[K, V] =
   for k, e in t:
     if f(e):
@@ -757,7 +773,27 @@ proc inversed*[K, V](t: Table[K, V]): Table[V, seq[K]] =
       result[v].add k
     else:
       result[v] = @[k] 
-      
+
+proc inversedUnique*[K, V](t: Table[K, V]): Table[V, K] = 
+  # specialized for bijection mapping
+  t.inversed.map(it => it[0])
+
+proc intersection*[K,V1,V2,V](t1: Table[K, V1], t2: Table[K, V2], merge: proc(v1: V1, v2: V2): V): Table[K,V] =
+  var k1 = t1.keyseq
+  var k2 = t2.keyseq
+  k1.sort()
+  k2.sort()
+  var i,j=0
+  while i < k1.len and j < k2.len:
+    if k1[i] == k2[j]:
+      result[k1[i]] = merge(t1[k1[i]], t2[k2[j]])
+      i += 1
+      j += 1
+    elif k1[i] < k2[j]:
+      i += 1
+    elif k2[j] < k1[i]:
+      j += 1
+
 proc argmins*[K, V](t: Table[K,V]): tuple[keys: seq[K], v: V] =
   # equal to 
   # result[1] = t.values.toseq.min
