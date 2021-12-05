@@ -321,22 +321,66 @@ iterator windowed*[T](s: openArray[T], size: int, step: int = 1): seq[T] =
 
 # -------------------------------------------------------------
 # openArray
+#
+# max, min, high, low
+# sum, prod,
+# count
+# toHashSet, toCountTable
 
-proc pairToTable*[T](xs: openArray[T]): Table[T, T] =
-  # conventional even-positions as key, odd-position as value
-  if xs.len mod 2 != 0:
-    raise newException(ValueError, "length of array must be even")
+# constructors
+
+proc arange*(n: int): seq[int] =
+  runnableExamples:
+    assert arange(3) == @[0,1,2]
   var i = 0
-  while i < xs.len:
-    result[xs[i]] = xs[i+1]
-    i += 2
+  while i < n:
+    result.add i
+    i += 1
 
-proc slice*[T](xs: openArray[T]): Slice[int] {.inline.} =
+proc arange*(s, e: int, step: int = 1): seq[int] =
+  ## similar to toSeq(s..e), but half inclusive and controllable step 
+  var i = s
+  while i < e:
+    result.add i
+    i += step
+
+proc linspace*(s, e: float, nPart: int): seq[float] =
+  ## return an arithmetic sequence of len `nPart` 
+  ## with first element equal to `s` and last element equal to `e`
+  result = newSeq[float](nPart)
+  result[0] = s
+  for i in 1 .. nPart-2:
+    result[i] = s + i.float*(e-s)/(nPart-1).float
+  result[nPart-1] = e
+
+macro zeros*(typ: typedesc, args: varargs[untyped]): untyped =
+  ## convenient function to initialize nested sequece of typ
+  assert args.len > 0, "must be at least one dimension"
+  result = nnkCall.newTree(
+    nnkBracketExpr.newTree(
+      "newSeq".ident,
+      typ
+    ),
+    args[args.len - 1]
+  )
+
+  var n = args.len - 2
+  while n >= 0:
+    result = nnkCall.newTree(
+      "newSeqWith".ident,
+      args[n],
+      result
+    )
+    n -= 1
+
+# accessors
+
+proc bound*[T](xs: openArray[T]): Slice[int] {.inline.} =
   # useful to check bound
   # more convenient then writing 0 ..< xs.len
   runnableExamples:
     let xs = toSeq(1..100)
-    for i in xs.slice:
+    for i in xs.bound:
       assert i in xs.slice
   xs.low..xs.high
 
@@ -355,13 +399,14 @@ proc `[]=`*[T](m: var openArray[seq[T]], p: array[2, int], v: T) =
   m[p[0]][p[1]] = v
 
 proc hasKey*[T](a: openArray[T], k: int): bool {.inline.} =
-  k in a.slice
+  k in a.bound
 
 proc hasKey*[T](a: openArray[seq[T]], k: seq[int]): bool =
+  # useful to check k bounded by a
+  assert k.len <= 2
   case k.len:
-  of 1: k[0] in a.slice
-  of 2: k[0] in a.slice and k[1] in a[k[0]].slice
-  else: false
+  of 1: k[0] in a.bound
+  of 2: k[0] in a.bound and k[1] in a[k[0]].bound
 
 proc cmp*[I, T](a, b: array[I, T]): int =
   for i, x in a:
@@ -414,6 +459,7 @@ proc count*[T](xs: openArray[T], test: proc(t: T): bool): int =
 
 proc indexes*[T](xs: openArray[T], v: T): seq[int] =
   ## return the index that equal to v (similar to find, but find all)
+  ## use xs.find(x => x == v)
   for i, x in xs:
     if x == v:
       result.add i
@@ -431,7 +477,7 @@ proc find*[T](xs: openArray[T], test: proc(t: T): bool): int =
     if test(x):
       return i
 
-proc minIndexes*[T](xs: openArray[T]): seq[int] =
+proc argmins*[T](xs: openArray[T]): seq[int] =
   if xs.len == 0: return
   var v = xs[0]
   result.add 0
@@ -442,7 +488,7 @@ proc minIndexes*[T](xs: openArray[T]): seq[int] =
     elif xs[i] == v:
       result.add i
 
-proc maxIndexes*[T](xs: openArray[T]): seq[int] =
+proc argmaxs*[T](xs: openArray[T]): seq[int] =
   if xs.len == 0: return
   var v = xs[0]
   result.add 0
@@ -538,6 +584,7 @@ template foldlSeq*(xs, body: untyped): untyped =
 proc transpose*[T](xs: openArray[seq[T]], default: T = T(0)): seq[seq[T]] =
   ## return a new transposed matrix
   ## If the xs is not full, the hole will be filled with zeros.
+  ## it is useful to chain map operations
   let m = xs.len
   if m > 0:
     var n = xs[0].len
@@ -618,86 +665,51 @@ vectorize(`-`, float, float)
 vectorize(`*`, float, float)
 vectorize(`/`, float, float)
 
-proc dot*[T](xs, ys: openArray[T]): T =
-  assert xs.len == ys.len
-  for i in xs.low .. xs.high:
-    result += xs[i] * ys[i]
+proc toTable*[T](xs: openArray[T]): Table[int, T] =
+  for i, x in xs:
+    result[i] = x
 
-proc arange*(n: int): seq[int] =
-  runnableExamples:
-    assert arange(3) == @[0,1,2]
+proc pairToTable*[T](xs: openArray[T]): Table[T, T] =
+  # conventional even-positions as key, odd-position as value
+  if xs.len mod 2 != 0:
+    raise newException(ValueError, "length of array must be even")
   var i = 0
-  while i < n:
-    result.add i
-    i += 1
-
-proc arange*(s, e: int, step: int = 1): seq[int] =
-  ## similar to toSeq(s..e), but half inclusive and controllable step 
-  var i = s
-  while i < e:
-    result.add i
-    i += step
-
-proc linspace*(s, e: float, nPart: int): seq[float] =
-  ## return an arithmetic sequence of len `nPart` 
-  ## with first element equal to `s` and last element equal to `e`
-  result = newSeq[float](nPart)
-  result[0] = s
-  for i in 1 .. nPart-2:
-    result[i] = s + i.float*(e-s)/(nPart-1).float
-  result[nPart-1] = e
-
-macro tensor*(typ: untyped, args: varargs[untyped]): untyped =
-  ## convenient function to initialize nested sequece of typ
-  assert args.len > 0, "must be at least one dimension"
-  result = nnkCall.newTree(
-    nnkBracketExpr.newTree(
-      "newSeq".ident,
-      typ
-    ),
-    args[args.len - 1]
-  )
-
-  var n = args.len - 2
-  while n >= 0:
-    result = nnkCall.newTree(
-      "newSeqWith".ident,
-      args[n],
-      result
-    )
-    n -= 1
-
-macro zeros*(args: varargs[untyped]): untyped =
-  runnableExamples:
-    let m = zeros(2,3)
-    assert m == @[@[0,0,0], @[0,0,0]]
-    
-  assert args.len > 0, "must be at least one dimension"
-  result = nnkCall.newTree(
-    nnkBracketExpr.newTree(
-      "newSeq".ident,
-      "int".ident
-    ),
-    args[args.len - 1]
-  )
-
-  var n = args.len - 2
-  while n >= 0:
-    result = nnkCall.newTree(
-      "newSeqWith".ident,
-      args[n],
-      result
-    )
-    n -= 1
+  while i < xs.len:
+    result[xs[i]] = xs[i+1]
+    i += 2
 
 # -------------------------------------------------------------
 # iterable 
 
 # -------------------------------------------------------------
 # HashSet
+#
+# +, -, *, <, <=
+# map
+# toSeq
+
+proc max*[T](hs: SomeSet[T]): T = 
+  ## If hs is empty, return T(0)
+  var isFirst = true
+  for v in hs:
+    if isFirst:
+      isFirst = false
+      result = v
+    else:
+      result = max(result, v)
+
+proc min*[T](hs: SomeSet[T]): T =
+  var isFirst = true
+  for v in hs:
+    if isFirst:
+      isFirst = false
+      result = v
+    else:
+      result = min(result, v)
 
 proc toCountTable*[T](hs: SomeSet[T]): CountTable[T] =
-  ## toCountTable for SomeSet, though count should be 1
+  ## toCountTable for SomeSet, though count should be 1,
+  ## but often use for further process
   for x in hs:
     result.inc(x)
 
@@ -739,18 +751,49 @@ proc filter*[K, V](t: Table[K, V], f: proc(k: K, v: V): bool): Table[K, V] =
     if f(k, e):
       result[k] = e
 
-proc inversed*[K, V](t: Table[K, V]): Table[V, K] =
-  ## Swap the Keys and values.
-  ## If the table is not bijective, any one value will the key
+proc inversed*[K, V](t: Table[K, V]): Table[V, seq[K]] =
   for k, v in t:
-    result[v] = k
+    if v in result:
+      result[v].add k
+    else:
+      result[v] = @[k] 
+      
+proc argmins*[K, V](t: Table[K,V]): tuple[keys: seq[K], v: V] =
+  # equal to 
+  # result[1] = t.values.toseq.min
+  # result[0] = t.filter(v => v == mi).keys.toseq
+  var isFirst = true
+  for k, v in t:
+    if isFirst:
+      isFirst = false
+      result[0] = @[k]
+      result[1] = v
+    elif v == result[1]:
+      result[0].add k
+    elif v < result[1]:
+      result[0] = @[k]
+      result[1] = v
 
-proc multiInvsersed*[K, V](t: Table[K, V]): Table[V, seq[K]] =
+proc argmaxs*[K, V](t: Table[K,V]): tuple[keys: seq[K], v: V] =
+  # equal to 
+  # result[1] = t.values.toseq.min
+  # result[0] = t.filter(v => v == mi).keys.toseq
+  var isFirst = true
   for k, v in t:
-    result[v].add k 
+    if isFirst:
+      isFirst = false
+      result[0] = @[k]
+      result[1] = v
+    elif v == result[1]:
+      result[0].add k
+    elif v > result[1]:
+      result[0] = @[k]
+      result[1] = v
 
 # -------------------------------------------------------------
 # CountTable
+
+proc dec*[T](t: CountTable[T], k: T) = t.inc(k, -1)
 
 proc `+`*[T](a, b: CountTable[T]): CountTable[T] =
   for k, v in a:
@@ -792,7 +835,7 @@ proc filter*[T](t: CountTable[T], f: proc(k: T, n: int): bool): CountTable[T] =
     if f(k, e):
       result[k] = e
 
-proc largests*[T](t: CountTable[T]): tuple[keys: seq[T], val: int] =
+proc argmaxs*[T](t: CountTable[T]): tuple[keys: seq[T], val: int] =
   for k, v in t:
     if v > result.val:
       result.keys = @[k]
@@ -800,14 +843,22 @@ proc largests*[T](t: CountTable[T]): tuple[keys: seq[T], val: int] =
     elif v == result.val:
       result.keys.add k
 
-proc smallests*[T](t: CountTable[T]): tuple[keys: seq[T], val: int] =
-  # smallest non-zero count
+proc argmins*[T](t: CountTable[T]): tuple[keys: seq[T], val: int] =
+  # smallest non-zero count, t is empty, keys is empty, val = 0
   for k, v in t:
     if v < result.val or result.val == 0:
       result.keys = @[k]
       result.val = v
     elif v == result.val:
       result.keys.add k
+
+proc inversed*[T](t: CountTable[T]): Table[int, seq[T]] =
+  for k, v in t:
+    if v in result:
+      result[v].add k
+    else:
+      result[v] = @[k]
+
 # -------------------------------------------------------------
 # macros
 
