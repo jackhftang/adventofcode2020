@@ -835,6 +835,12 @@ proc argmaxs*[K, V](t: Table[K,V]): (seq[K], V) =
 
 proc dec*[T](t: CountTable[T], k: T) = t.inc(k, -1)
 
+proc keyseq*[T](t: CountTable[T]): seq[T] = t.keys.toSeq
+
+proc valseq*[T](t: CountTable[T]): seq[int] = t.values.toSeq
+
+proc toSeq*[T](t: CountTable[T]): seq[int] = t.values.toSeq
+
 proc `+`*[T](a, b: CountTable[T]): CountTable[T] =
   for k, v in a:
     result.inc(k, v)
@@ -1168,6 +1174,34 @@ proc rotateRad*[T: SomeFloat](z: Complex[T], rad: T): Complex[T] =
 proc rotateDeg*[T: SomeFloat](z: Complex[T], deg: T): Complex[T] =
   ## rotate rad anti-clockwise
   rotateRad(deg*PI/180.0)
+
+type
+  Point* = object
+    x*, y*: float
+  Segement* = object
+    s*, e*: Point
+
+proc `+`*(a,b: Point): Point = Point(x: a.x + b.x, y: a.y + b.y)
+
+proc `-`*(a,b: Point): Point = Point(x: a.x - b.x, y: a.y - b.y)
+
+proc cross*(a,b: Point): float = 
+  # if cross(a,b) > 0, then a to b counter-clockwise 
+  # if cross(a,b) < 0, then a to b clockwise
+  # if cross(a,b) == 0, then a and b colinear with origin
+  a.x*b.y - a.y*b.x
+
+proc isClockwise*(a,b,c: Point): bool = 
+  # is a->b->c turning clockwise  
+  cross(c-a, b-a) > 0
+
+proc isCounterClockwise*(a,b,c: Point): bool = 
+  # is a->b->c turning counter-clockwise  
+  cross(b-a, c-a) > 0
+
+proc hasIntersect*(a, b: Segement): bool =
+  (isClockwise(a.s, a.e, b.s) xor isClockwise(a.s, a.e, b.e)) and
+  (isClockwise(b.s, b.e, a.s) xor isClockwise(b.s, b.e, a.e))
 
 # -------------------------------------------------------------
 # graph
