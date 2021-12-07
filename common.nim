@@ -21,23 +21,31 @@ proc abort*(xs: varargs[string, `$`]) =
   raise newException(ValueError, xs.join(" "))
 
 type
-  StringEncoder* = object
-    seed: int
-    en: Table[string, int]
-    de: seq[string]
+  Enumerator*[T] = object
+    ix: int
+    en: Table[T, int]
+    de: seq[T]
 
-proc encode*(encoder: var StringEncoder, s: string): int =
-  if s notin encoder.en:
-    encoder.en[s] = encoder.seed
-    encoder.de.add s
-    encoder.seed.inc
-  return encoder.en[s]
+proc encode*[T](er: var Enumerator[T], s: T): int =
+  if s notin er.en:
+    er.en[s] = er.ix
+    er.de.add s
+    er.ix += 1
+  return er.en[s]
 
-proc decode*(encoder: StringEncoder, n: int): string =
-  encoder.de[n]
+proc decode*[T](er: Enumerator[T], n: int): T =
+  # raise IndexError if not found 
+  er.de[n]
 
-proc len*(encoder: StringEncoder): int =
-  encoder.de.len
+proc len*[T](er: Enumerator[T]): int =
+  # encoder.de.len
+  er.ix
+
+iterator items*[T](er: Enumerator[T]): T =
+  for x in er.de: yield x
+
+iterator pairs*[T](er: Enumerator[T]): (int, T) =
+  for i, x in er.de: yield (i, x)
 
 proc `[]`*(slice: HSlice[int, int], n: int): int =
   ## make integer HSlice more like a virtual array and indexable.
@@ -53,6 +61,9 @@ proc `[]`*(slice: HSlice[int, int], n: int): int =
 # string
 
 proc toTable*(s: string): Table[int, char] =
+  for i, c in s: result[i] = c
+
+proc toOrderedTable*(s: string): OrderedTable[int, char] = 
   for i, c in s: result[i] = c
 
 proc toCountTable*(s: string): CountTable[char] =
@@ -671,8 +682,10 @@ vectorize(`*`, float, float)
 vectorize(`/`, float, float)
 
 proc toTable*[T](xs: openArray[T]): Table[int, T] =
-  for i, x in xs:
-    result[i] = x
+  for i, x in xs: result[i] = x
+
+proc toOrderedTable*[T](xs: openArray[T]): OrderedTable[int, T] =
+  for i, x in xs: result[i] = x
 
 proc pairToTable*[T](xs: openArray[T]): Table[T, T] =
   # conventional even-positions as key, odd-position as value
@@ -727,6 +740,8 @@ proc filter*[T](hs: SomeSet[T], f: proc(t: T): bool): HashSet[T] =
 # -------------------------------------------------------------
 # Table
 
+type SomeTable*[K,V] = Table[K,V] | OrderedTable[K,V] | CountTable[K]
+
 proc keyseq*[K, V](t: Table[K, V]): seq[K] = t.keys.toseq
 
 proc valseq*[K, V](t: Table[K, V]): seq[V] = t.values.toseq
@@ -739,6 +754,7 @@ proc indexes*[K, V](t: Table[K, V], v: V): seq[K] =
       result.add k
 
 proc indexes*[K, V](t: Table[K, V], test: proc(v: V): bool): seq[K] =
+  # specialized t.filter(test).keyseq
   for k, e in t:
     if test(e):
       result.add k
