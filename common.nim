@@ -1,5 +1,5 @@
-import sequtils, sets, deques, heapqueue, strformat, strutils, strscans,
-    math, options, sugar, algorithm, random, lists, complex
+import std/[sequtils, sets, deques, heapqueue, strformat, strutils, strscans,
+    math, options, sugar, algorithm, random, lists, complex]
 export sequtils, sets, deques, heapqueue, strformat, strscans,
     math, options, sugar, algorithm, random, lists, complex
 
@@ -340,12 +340,24 @@ iterator chunked*[T](s: openArray[T], size: int): seq[T] =
 # -------------------------------------------------------------
 # openArray
 #
-# max, min, high, low
-# sum, prod,
-# count
-# toHashSet, toCountTable
-
-# constructors
+# sequtils
+#   max, min, high, low
+#   sum, prod,
+#   all, any
+#   apply 
+#   concat, cycle, repeat
+#   zip, unzip 
+#   count, countIt
+# 
+# algorithm
+#  fill, reverse
+#  sort, sorted, isSorted
+#   
+# sets
+#   toHashSet
+#
+# tables
+#   toCountTable
 
 proc arange*(n: int): seq[int] =
   runnableExamples:
@@ -695,6 +707,41 @@ proc pairToTable*[T](xs: openArray[T]): Table[T, T] =
   while i < xs.len:
     result[xs[i]] = xs[i+1]
     i += 2
+
+proc biset*[T](xs: var openArray[T], test: proc(x: T): bool) = 
+  var i = xs.low
+  var j = xs.high
+  while true:
+    while i < j:
+      if test(xs[i]): break
+      i += 1
+    while i < j:
+      if not test(xs[j]): break
+      j -= 1
+    if i >= j: 
+      break
+    else:
+      swap(xs[i], xs[j])
+      i += 1
+      j -= 1
+
+proc biseted*[T](xs: openArray[T], test: proc(x: T): bool): seq[T] =
+  result = newSeq[T](xs.len)
+  var i = xs.low
+  var j = xs.high
+  while i < j:
+    while i < j:
+      if test(xs[i]): break
+      result[i] = xs[i]
+      i += 1
+    while i < j:
+      if not test(xs[j]): break
+      result[j] = xs[j]
+      j -= 1
+    result[j] = xs[i]
+    result[i] = xs[j]
+    i += 1
+    j -= 1
 
 # -------------------------------------------------------------
 # iterable 
