@@ -57,6 +57,27 @@ proc `[]`*(slice: HSlice[int, int], n: int): int =
     raise newException(IndexDefect, "out of bound")
   slice.a + n
 
+#[
+  segment7[i][j] = configuration of digits i 
+     0
+    1 2
+     3
+    4 5
+     6
+]#
+let segment7* = [
+  [1, 1, 1, 0, 1, 1, 1],
+  [0, 0, 1, 0, 0, 1, 0],
+  [1, 0, 1, 1, 1, 0, 1],
+  [1, 0, 1, 1, 0, 1, 1],
+  [0, 1, 1, 1, 0, 1, 0],
+  [1, 1, 0, 1, 0, 1, 1],
+  [1, 1, 0, 1, 1, 1, 1],
+  [1, 0, 1, 0, 0, 1, 0],
+  [1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 0, 1, 1],
+]
+
 # -------------------------------------------------------------
 # string
 
@@ -175,7 +196,7 @@ proc quadraticRoots*(a,b,c: float): seq[float] =
   result.add (-b - t2)/a/2
   result.add (-b + t2)/a/2
 
-proc digits*(n: int, base = 10): seq[int] =
+proc digits*(n: int, base: int): seq[int] =
   ## the first digit is the least significant 
   ## Note zero return @[0], not @[]
   assert n >= 0
@@ -185,7 +206,7 @@ proc digits*(n: int, base = 10): seq[int] =
     result.add (t mod base)
     t = t div base
 
-proc fromDigits*(ds: seq[int], base = 10): int =
+proc fromDigits*(ds: seq[int], base: int): int =
   ## the first digit is the least significant
   var b = 1
   for d in ds:
@@ -1365,6 +1386,7 @@ proc bipartite*(graph: seq[seq[int]]): (int, seq[int]) =
     # 0 --> 3
     # 1 --> 3
     var g: seq[seq[int]]
+    # only edge from a to b, no need backward edge
     g[0].add [2,3]
     g[1].add [2]
     assert bipartite(g) == (2, @[3,2,1,0])
