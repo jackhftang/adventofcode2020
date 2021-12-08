@@ -1,4 +1,4 @@
-import ../common
+import moves
 
 proc o1(input: seq[seq[int]]): int =
   var curr = input

@@ -1,4 +1,4 @@
-import ../common
+import moves
 
 proc main(inputFilename: string) =
   var input = readFile(currentSourcePath.parentDir / inputFilename).strip.splitLines.map(parseInt)
