@@ -1378,41 +1378,46 @@ proc bellmanFord*(edges: seq[BellmanFordEdge], nNode, s: int): seq[int] =
       else:
         result[e.dest] = min(result[e.dest], result[e.src] + e.cost)
 
-proc bipartite*(graph: seq[seq[int]]): (int, seq[int]) =
+proc bipartite*(graph: seq[seq[int]]): seq[(int, int)] =
   ## specialized version of maxFlow for bipartile matching O(n^2)
+  ## only edges from A to B, no need backward edge
+  ## max stack depth = n
   ## (i, match[i]) are the pair of match. -1 means no match 
   runnableExamples:
-    # 0 --> 2
-    # 0 --> 3
-    # 1 --> 3
+    # a0 --> b0
+    # a0 --> b1
+    # a1 --> b1
     var g: seq[seq[int]]
-    # only edge from a to b, no need backward edge
-    g[0].add [2,3]
-    g[1].add [2]
-    assert bipartite(g) == (2, @[3,2,1,0])
-  let n = graph.len
-  var match = newSeqWith(n, -1)
-  var avail = newSeqWith(n, true)
+    g[0].add [0,1]
+    g[1].add [1]
+    assert bipartite(g) == @[(0,0), (1,1)]
+
+  let na = graph.len
+  var avail = newSeqWith(na, true)
+  var amatch = newSeqWith(na, -1)
+  var bmatch: Table[int, int]
 
   proc dfs(v: int): bool =
     # return true if found a match
     avail[v] = false
     for u in graph[v]:
-      let m = match[u]
+      let m = bmatch.getOrDefault(u, -1)
       if m == -1 or avail[m] and dfs(m):
-        match[v] = u
-        match[u] = v
+        amatch[v] = u
+        bmatch[u] = v
         return true
     return false
 
-  var cnt = 0
-  for i in 0..<n:
-    if match[i] == -1:
+  # find match of a
+  for i in 0 ..< na:
+    if amatch[i] == -1:
       avail.fill(true)
-      if dfs(i):
-        cnt.inc
-
-  return (cnt, match)
+      discard dfs(i)
+  
+  # collect matches
+  for i, v in amatch:
+    if v != -1:
+      result.add (i, v)
 
 type
   MaxFlowGraph*[T: SomeNumber] =

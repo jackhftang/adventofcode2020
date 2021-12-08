@@ -27,26 +27,25 @@ proc main(inputFilename: string) =
   var ans = 0
   for xs in input:
     # build graph
-    var g = newSeqWith(14, newSeq[int]())
-    for i in 0..6:
-      g[i] = arange(7,14)
-    forSum x in xs[1], xs[0]:
-      let y = x.map(c => c.ord - 'a'.ord + 7).toHashSet
-      let n = x.len
-      # largest common configuration
-      let cs = data.filter(g => g.sum == n).transpose.map(lis => lis.prod)
+    var g = newSeqWith(7, arange(7))
+    for x in xs[0]:
+      let y = x.map(c => c.ord - 'a'.ord).toHashSet
+      let xlen = x.len
+      # largest common segment
+      let cs = data.filter(g => g.sum == xlen).transpose.map(lis => lis.prod)
       for i, v in cs:
         if v == 1:
           g[i] = intersection(g[i].toHashSet, y).toseq
-    
+          
     # matching 
-    let (nMatch, match) = bipartite(g)
-    assert nMatch == 7, "no match"
+    let match = bipartite(g)
+    assert match.len == 7, "no match"
 
     # reverse to digits
+    var rev = match.toTable.inversedUnique
     var ds: seq[int]
     for x in xs[1]:
-      let ns = x.map(c => match[c.ord - 'a'.ord + 7])
+      let ns = x.map(c => rev[c.ord - 'a'.ord])
       var arr = zeros(int, 7)
       for n in ns: arr[n] = 1
       ds.add data.find(arr)
