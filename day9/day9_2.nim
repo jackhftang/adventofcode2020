@@ -30,10 +30,9 @@ proc main(inputFilename: string) =
     let v = input[i][j]
     if nei.all(x => x > v):
       basins.add basin(i,j)
-  basins.sort()
+  basins.sort(Descending)
   
-  echo basins
-  echo basins[^3..^1].prod()
+  echo basins[0..2].prod
 
 when isMainModule:
   main("day9_sample_1.txt")
