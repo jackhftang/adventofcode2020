@@ -2,7 +2,7 @@ import moves
 
 proc main(inputFilename: string) =
   let rawInput = readFile(currentSourcePath.parentDir / inputFilename).strip 
-  var input = rawInput.splitLines.map(s => s.split(" -> ").map(w => w.split(",").map(parseInt)))
+  var input = rawInput.splitLines.map(s => s.split(" -> ").map(w => toArray[2, int](w.split(",").map(parseInt))))
   
   # echo input
   # for pt in input:

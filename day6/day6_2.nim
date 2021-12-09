@@ -15,7 +15,7 @@ proc main(inputFilename: string) =
         m.inc(8, v)
       else:
         m.inc(k-1, v)
-  echo m.toseq.sum
+  echo m.valseq.sum
 
 when isMainModule:
   # main("day6_sample1.txt")

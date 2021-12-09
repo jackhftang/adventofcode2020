@@ -32,7 +32,7 @@ proc main(inputFilename: string) =
       let y = x.map(c => c.ord - 'a'.ord).toHashSet
       let xlen = x.len
       # largest common segment
-      let cs = data.filter(g => g.sum == xlen).transpose.map(lis => lis.prod)
+      let cs = data.filter(g => g.sum == xlen).fold((a,b) => a*b)
       for i, v in cs:
         if v == 1:
           g[i] = intersection(g[i].toHashSet, y).toseq

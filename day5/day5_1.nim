@@ -2,7 +2,7 @@ import moves
 
 proc main(inputFilename: string) =
   let rawInput = readFile(currentSourcePath.parentDir / inputFilename).strip 
-  var input = rawInput.splitLines.map(s => s.split(" -> ").map(w => w.split(",").map(parseInt)))
+  var input = rawInput.splitLines.map(s => s.split(" -> ").map(w => toArray[2,int](w.split(",").map(parseInt)) ))
   
   # echo input
   # for pt in input:
@@ -11,7 +11,7 @@ proc main(inputFilename: string) =
   #     echo diff
 
   const N = 1000
-  var board = zeros(int, N, N)
+  var board = initMatrix[int](N, N)
   for pair in input:
     let p1 = pair[0]
     let p2 = pair[1]
@@ -23,13 +23,14 @@ proc main(inputFilename: string) =
     let dd = [dx, dy]
     var p = p1
     while p != p2 + dd:
-      board[p[0]][p[1]] += 1
+      board[p] = board[p] + 1
       p = p + dd
 
   var cnt = 0
-  forProd i, j in 0..<N , 0..<N:
-    if board[i][j] > 1:
+  for p, v in board:
+    if v > 1:
       cnt += 1
+
   # echo board
   echo cnt
 
