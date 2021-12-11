@@ -37,59 +37,9 @@ let segment7* = [
   [1, 1, 1, 1, 0, 1, 1],
 ]
 
-# -------------------------------------------------------------
-# string
-
-
-
-# -------------------------------------------------------------
-# control flow
-
-
-
-# -------------------------------------------------------------
-# arithmetic
-
-# -------------------------------------------------------------
-# Combinatorics
-
-# -------------------------------------------------------------
-# openArray
-#
-# sequtils
-#   max, min, high, low
-#   sum, prod,
-#   all, any
-#   apply 
-#   concat, cycle, repeat
-#   zip, unzip 
-#   count, countIt
-# 
-# algorithm
-#  fill, reverse
-#  sort, sorted, isSorted
-#   
-# sets
-#   toHashSet
-#
-# tables
-#   toCountTable
-
-
 proc `[]`*[T](m: openArray[seq[T]], p: seq[int]): T =
   assert p.len == 2
   m[p[0]][p[1]]
-
-
-proc hasKey*[T](a: openArray[T], k: int): bool {.inline.} =
-  k in a.bound
-
-proc hasKey*[T](a: openArray[seq[T]], k: seq[int]): bool =
-  # useful to check k bounded by a
-  assert k.len <= 2
-  case k.len:
-  of 1: k[0] in a.bound
-  of 2: k[0] in a.bound and k[1] in a[k[0]].bound
 
 template foldlSeq*(xs, init, body: untyped): untyped =
   # template version of fold
@@ -122,17 +72,6 @@ template foldlSeq*(xs, body: untyped): untyped =
       let b {.inject.} = xs[i]
       result[i] = body
   result
-
-
-# -------------------------------------------------------------
-# iterable 
-
-# -------------------------------------------------------------
-# HashSet
-#
-# +, -, *, <, <=
-# map
-# toSeq
 
 # -------------------------------------------------------------
 # geometry
