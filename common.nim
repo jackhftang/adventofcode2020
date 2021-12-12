@@ -102,6 +102,7 @@ const nei6* = [
   @[1,1],
 ]
 
+# product([arange(-1,2), arange(-1,2)]).filter(xs => xs.any(x => x != 0))
 const nei8* = [
   # positive toward right and bottom
   # [y, x]
