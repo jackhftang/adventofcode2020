@@ -1,7 +1,5 @@
 import moves
 
-
-
 proc main(inputFilename: string) =
   let rawInput = readFile(currentSourcePath.parentDir / inputFilename).strip 
   var es: Enumerator[string]
