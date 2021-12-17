@@ -31,7 +31,7 @@ proc main(inputFilename: string) =
   # echo highesty([17,-4])
   
   var cnt = 0
-  forProd vx, vy in 0 .. input[0][1], input[1][0] .. 1000:
+  forProd vx, vy in 0 .. input[0][1], input[1][0] .. -input[1][0]:
     if highesty([vx, vy]) >= 0:
       cnt += 1
   echo cnt 

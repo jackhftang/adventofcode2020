@@ -23,9 +23,14 @@ proc main(inputFilename: string) =
         # echo "out", mxy
         return int.low
 
+  # echo highesty([7,2])
+  # echo highesty([6,3])
+  # echo highesty([9,0])
+  # echo highesty([17,-4])
+  
   let mxx = input[0][1]
   var ans = 0
-  forProd vx, vy in 1 .. mxx, 0 .. 1000:
+  forProd vx, vy in 1 .. mxx, 0 .. -input[1][0]:
     ans = max(ans, highesty([vx, vy]))
   echo ans
 
