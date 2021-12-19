@@ -3,7 +3,7 @@ import moves
 type
   FooKind = enum
     single
-    pair
+    pair   # no needed actually 
     node
 
   Foo = ref object
@@ -27,7 +27,7 @@ type
 #     result.l = n.l.copy()
 #     result.r = n.r.copy()
 
-proc `normalize`(a: Foo): Foo =
+proc normalize(a: Foo): Foo =
   if a.kind == node:
     if a.l.kind == single and a.r.kind == single:
       return Foo(kind: pair, a: a.l.v, b: a.r.v)
@@ -108,49 +108,59 @@ proc mag*(foo: Foo): int =
   of pair: return 3*foo.a + 2*foo.b
   of node: return 3*mag(foo.l) + 2*mag(foo.r)
     
+
 proc parseFoo*(s: string): Foo =
-  proc readSingle(i: int): (int, Foo) =
-    assert s[i].isDigit
-    var n = 0
-    while s[i+n].isDigit:
-      n += 1
-    # echo s[i..i+n-1]
-    return (n, Foo(kind: single, v: parseInt(s[i..i+n-1])))
+  let p = fixedPoint do (fooParser: Parser[Foo]) -> Parser[Foo]:
+    result = choice(@[
+      intParser().map(n => Foo(kind: single, v: n)),
+      map2( charParser('[') >> fooParser, charParser(',') >> fooParser << charParser(']') ) do (a: Foo, b: Foo) -> Foo:
+        return Foo(kind: node, l:a, r:b).normalize
+    ])
+  result = p.parse(s)
 
-  proc readFoo(i: int): (int, Foo);
+# proc parseFoo*(s: string): Foo =
+#   proc readSingle(i: int): (int, Foo) =
+#     assert s[i].isDigit
+#     var n = 0
+#     while s[i+n].isDigit:
+#       n += 1
+#     # echo s[i..i+n-1]
+#     return (n, Foo(kind: single, v: parseInt(s[i..i+n-1])))
 
-  proc readPair(i: int): (int, Foo) =
-    var j = i
-    assert s[j] == '['
-    j += 1
+#   proc readFoo(i: int): (int, Foo);
 
-    let res1 = readFoo(j)
-    let l = res1[1]
-    j += res1[0]
+#   proc readPair(i: int): (int, Foo) =
+#     var j = i
+#     assert s[j] == '['
+#     j += 1
 
-    assert s[j] == ',', fmt"s[{j}]={s[j]} s={s}"
-    j += 1
+#     let res1 = readFoo(j)
+#     let l = res1[1]
+#     j += res1[0]
 
-    let res2 = readFoo(j)
-    let r = res2[1]
-    j += res2[0]
+#     assert s[j] == ',', fmt"s[{j}]={s[j]} s={s}"
+#     j += 1
+
+#     let res2 = readFoo(j)
+#     let r = res2[1]
+#     j += res2[0]
     
-    assert s[j] == ']'
-    j += 1
+#     assert s[j] == ']'
+#     j += 1
 
-    if l.kind == single and r.kind == single:
-      return (j-i, Foo(kind: pair, a: l.v, b: r.v))
-    else:
-      return (j-i, Foo(kind: node, l:l, r:r))
+#     if l.kind == single and r.kind == single:
+#       return (j-i, Foo(kind: pair, a: l.v, b: r.v))
+#     else:
+#       return (j-i, Foo(kind: node, l:l, r:r))
 
-  proc readFoo(i: int): (int, Foo) =
-    if s[i].isDigit:
-      return readSingle(i)
-    elif s[i] == '[':
-      return readPair(i)
+#   proc readFoo(i: int): (int, Foo) =
+#     if s[i].isDigit:
+#       return readSingle(i)
+#     elif s[i] == '[':
+#       return readPair(i)
     
-  let res = readFoo(0)
-  return res[1]
+#   let res = readFoo(0)
+#   return res[1]
 
 proc `$`(n: Foo): string =
   case n.kind:
