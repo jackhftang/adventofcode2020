@@ -2,21 +2,25 @@ import moves
 import sets
 import deques
 
-type
-  V3 = object
-    x,y,z: int
-proc `-`*(a,b: V3): V3 = V3(x: a.x-b.x, y: a.y-b.y, z: a.z-b.z)
-proc `+`*(a,b: V3): V3 = V3(x: a.x+b.x, y: a.y+b.y, z: a.z+b.z)
-proc `==`*(a,b: V3): bool = a.x == b.x and a.y == b.y and a.z == b.z
-proc toSeq*(v: V3): seq[int] = @[v.x, v.y, v.z]
-proc abs*(v: V3): int = abs(v.x) + abs(v.y) + abs(v.z)
+type 
+  V3 = array[3, int]
 
-proc inv(flip: seq[int], perm: seq[int], v: V3): V3 =
-  let ys = v.toSeq
-  result.x = flip[0] * ys[perm[0]]
-  result.y = flip[1] * ys[perm[1]]
-  result.z = flip[2] * ys[perm[2]]
-proc inv(tr: (seq[int], seq[int]), v: V3): V3  = inv(tr[0], tr[1], v)
+proc abs*(v: V3): int = abs(v[0]) + abs(v[1]) + abs(v[2])
+
+proc inv(flip: V3, perm: V3, v: V3): V3 =
+  result[0] = flip[0] * v[perm[0]]
+  result[1] = flip[1] * v[perm[1]]
+  result[2] = flip[2] * v[perm[2]]
+proc inv(tr: (V3, V3), v: V3): V3  = inv(tr[0], tr[1], v)
+
+const views: seq[(V3,V3)] = block:
+  var res: seq[(V3,V3)]
+  for ps in permutation(3):
+    for dir in 0..7:
+      var ds = 2*digits(dir, 2)-1
+      while ds.len < 3: ds.add -1
+      res.add (toArray[3,int](ds), toArray[3,int](ps))
+  res
 
 proc main(inputFilename: string) =
   let rawInput = readFile(currentSourcePath.parentDir / inputFilename).strip 
@@ -27,8 +31,7 @@ proc main(inputFilename: string) =
   for i, x in input:
     for l in x[1..^1]:
       let ns = l.split(",").map(parseInt)
-      m[i].add V3(x:ns[0], y:ns[1], z:ns[2])
-  # echo m
+      m[i].add toArray[3,int](ns)
 
   # number of scanner
   let N = m.len
@@ -37,53 +40,53 @@ proc main(inputFilename: string) =
   # scanners position 
   var scanners = newSeq[V3](N)
   # transformation of beacons of scanner i, inv(t[i], m[i][j]) + scanners[i] 
-  var transforms = newSeq[(seq[int], seq[int])](N)
+  var transforms = newSeq[(V3, V3)](N)
 
   # initialize state
   found[0] = true
-  scanners[0] = V3(x:0,y:0,z:0)
-  transforms[0] = (@[1,1,1], @[0,1,2])
+  scanners[0] = [0,0,0]
+  transforms[0] = ([1,1,1], [0,1,2])
 
   var queue: Deque[int]
   queue.addLast 0
   while queue.len > 0:
     let i = queue.popFirst()
     let b1 = m[i].map(x => inv(transforms[i], x) + scanners[i])
-    let s1 = b1.toHashSet() 
 
     # find scanners that has overlapped beacons with scanner-i
     for j in 0 ..< N:
       if found[j]: continue
 
       blocK tryTransform:
-        for ps in permutation(3):
-          for dir in 0..7:
-            var ds = 2*digits(dir, 2)-1
-            while ds.len < 3: ds.add -1
-
-            let b2 = m[j].map(x => inv(ds, ps, x))
-
-            forProd x1, x2 in b1, b2:
-              let cand = x1-x2 
+        for view in views:
+          var b2 = newSeq[V3](m[j].len)
+          for k in b2.bound:
+            b2[k] = inv(view, m[j][k])
+          
+          for x1 in b1:
+            for x2 in b2:
+              let scanner = x1-x2 
               
               var cnt = 0
               for x in b2:
-                if x + cand in s1:
+                if x + scanner in b1:
                   cnt += 1
 
               if cnt >= 12:
                 if not found[j]: queue.addLast j
                 found[j] = true
-                transforms[j] = (ds, ps) 
-                scanners[j] = cand
+                transforms[j] = view
+                scanners[j] = scanner
                 break tryTransform
 
+  # part 1
   var pos: HashSet[V3]
   for i in 0 ..< N:
     for x in m[i]:
       pos.incl (inv(transforms[i], x) + scanners[i])
   echo pos.len
 
+  # part 2
   var ans2 = 0
   for i in 0 ..< N:
     for j in i+1 ..< N:
