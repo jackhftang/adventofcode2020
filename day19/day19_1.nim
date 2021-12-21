@@ -21,6 +21,8 @@ proc inv(tr: (seq[int], seq[int]), v: V3): V3  = inv(tr[0], tr[1], v)
 proc main(inputFilename: string) =
   let rawInput = readFile(currentSourcePath.parentDir / inputFilename).strip 
   var input = rawInput.split("\n\n").map(s => s.strip.splitLines)
+
+  # m[i] = beacons of scanner i
   var m: seq[seq[V3]] = newSeq[seq[V3]](input.len)
   for i, x in input:
     for l in x[1..^1]:
@@ -28,52 +30,53 @@ proc main(inputFilename: string) =
       m[i].add V3(x:ns[0], y:ns[1], z:ns[2])
   # echo m
 
+  # number of scanner
   let N = m.len
+  
   var found = newSeq[bool](N)
-  var transforms = newSeq[(seq[int], seq[int])](N)
+  # scanners position 
   var scanners = newSeq[V3](N)
+  # transformation of beacons of scanner i, inv(t[i], m[i][j]) + scanners[i] 
+  var transforms = newSeq[(seq[int], seq[int])](N)
+
+  # initialize state
   found[0] = true
-  transforms[0] = (@[1,1,1], @[0,1,2])
   scanners[0] = V3(x:0,y:0,z:0)
+  transforms[0] = (@[1,1,1], @[0,1,2])
 
   var queue: Deque[int]
   queue.addLast 0
   while queue.len > 0:
     let i = queue.popFirst()
+    let b1 = m[i].map(x => inv(transforms[i], x) + scanners[i])
+    let s1 = b1.toHashSet() 
 
-    echo fmt"finding match from {i}"
+    # find scanners that has overlapped beacons with scanner-i
     for j in 0 ..< N:
       if found[j]: continue
 
-      let b1 = m[i].map(x => inv(transforms[i], x) + scanners[i])
-      
-      # each transform
-      for ps in permutation(3):
-        for dir in 0..7:
-          var ds = 2*digits(dir, 2)-1
-          while ds.len < 3: ds.add -1
+      blocK tryTransform:
+        for ps in permutation(3):
+          for dir in 0..7:
+            var ds = 2*digits(dir, 2)-1
+            while ds.len < 3: ds.add -1
 
-          let b2 = m[j].map(x => inv(ds, ps, x))
+            let b2 = m[j].map(x => inv(ds, ps, x))
 
-          let cands = block: 
-            var res: seq[V3]
-            for x1 in b1:
-              for x2 in b2:
-                res.add (x1-x2)
-            res
+            forProd x1, x2 in b1, b2:
+              let cand = x1-x2 
+              
+              var cnt = 0
+              for x in b2:
+                if x + cand in s1:
+                  cnt += 1
 
-          let s1 = b1.toHashSet() 
-          for cand in cands:
-            # let s2 = b2.map(x => x+cand).toHashSet()
-            var s2: HashSet[V3]
-            for x in b2:
-              s2.incl x+cand
-            let c = intersection(s1, s2)
-            if c.len >= 12:
-              if not found[j]: queue.addLast j
-              found[j] = true
-              transforms[j] = (ds, ps) 
-              scanners[j] = cand
+              if cnt >= 12:
+                if not found[j]: queue.addLast j
+                found[j] = true
+                transforms[j] = (ds, ps) 
+                scanners[j] = cand
+                break tryTransform
 
   var pos: HashSet[V3]
   for i in 0 ..< N:
