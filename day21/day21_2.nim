@@ -3,10 +3,15 @@ import moves
 type State = tuple[pos: array[2,int], score: array[2,int], round: int]
 
 proc main(z0,z1:int) =
-  var xs: seq[int]
-  forProd i,j,k in [1,2,3],[1,2,3],[1,2,3]:
-    xs.add (i+j+k)
-  let xst = xs.toCountTable
+  # var xs: seq[int]
+  # forProd i,j,k in [1,2,3],[1,2,3],[1,2,3]:
+  #   xs.add (i+j+k)
+  # let xst = xs.toCountTable
+  let xst = product([
+    @[1,2,3],
+    @[1,2,3],
+    @[1,2,3],
+  ]).map(xs => xs.sum).toCountTable
 
   var dp: Table[State, array[2,int]]
   proc solve(xs: State): array[2, int] =
