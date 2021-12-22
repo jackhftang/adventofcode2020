@@ -1,7 +1,4 @@
 import moves
-import sets
-import deques
-
 type 
   V3 = array[3, int]
 
