@@ -197,6 +197,7 @@ proc main(inputFilename: string) =
 
   var milestone = 0
   var q: HeapQueue[(int, State)]
+  var visited: Table[int, int]
   q.push (0, input)
   while q.len > 0:
     let s = q.pop()
@@ -211,6 +212,9 @@ proc main(inputFilename: string) =
     for n in nei(s[1]):
       let state = n[1]
       let cost = n[0] + s[0]
+      if state in visited and visited[state] <= cost:
+        continue
+      visited[state] = cost
       q.push (cost, state)
 
 when isMainModule:
