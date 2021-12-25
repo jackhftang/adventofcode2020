@@ -75,6 +75,8 @@ type
     outs: seq[Option[seq[int]]]
     # none means no constraint 
     cons: seq[Option[seq[int]]]
+    # critical to check
+    crit: seq[bool]
 
 proc len*(c: VarTable): int = c.vars.len
 proc `[]`*(c: VarTable, i: VarTableEntryIx): VarTableEntry = c.vars[i.int]
@@ -165,19 +167,22 @@ proc `$`(c: VarTable): string =
         s.add "..."
       s.add "]"
 
-    result.add fmt"v{i}: {c.vars[i]} {s}"
+    let crit = if c.crit[i]: '>' else: ' '
+    result.add fmt"{crit}v{i}: {c.vars[i]} {s}"
 
 proc newSym*(c: var VarTable, sols: seq[int]): VarTableEntry = 
   result = VarTableEntry(k: SYM, sym: c.len)
   c.vars.add result
   c.outs.add some(sols)
   c.cons.add none[seq[int]]()
+  c.crit.add false
   
 proc addNode(c: var VarTable, n: VarTableEntry): VarTableEntry =
   result = VarTableEntry(k: SYM, sym: c.len)
   c.vars.add n
   c.outs.add none[seq[int]]()
   c.cons.add none[seq[int]]()
+  c.crit.add false
 
 proc simplify(c: var VarTable): bool =
   var updated = false
@@ -527,7 +532,17 @@ proc constraintOutput(c: var VarTable, ix: VarTableEntryIx, output: seq[int]) =
           let b2 = b.filter(x => x != a[0])
           if b2 != b: c.constraintOutput(n.b.to, b2)
 
-proc part1(c: VarTable, vs: seq[int]): (bool, seq[int]) =
+proc markCritical(c: var VarTable) =
+  # must populateOutputs first
+  for i in 0 ..< c.len:
+    # cons < outs
+    if c.cons[i].isNone:
+      continue
+    let a = c.cons[i].get.toHashSet
+    let b = c.outs[i].get.toHashSet
+    c.crit[i] = a < b
+
+proc find(c: VarTable, vs: seq[int], reverse: bool): (bool, seq[int]) =
   let i = vs.len
   if i == c.len:
     return (true, vs)
@@ -538,11 +553,18 @@ proc part1(c: VarTable, vs: seq[int]): (bool, seq[int]) =
   let n = c.vars[i]
   case n.k
   of SYM:
-    for v in c.outs[i].get.reversed:
-      var vs2 = vs
-      vs2.add v
-      let res = part1(c, vs2)
-      if res[0]: return res
+    if reverse:
+      for v in c.outs[i].get.reversed:
+        var vs2 = vs
+        vs2.add v
+        let res = find(c, vs2, reverse)
+        if res[0]: return res
+    else:
+      for v in c.outs[i].get:
+        var vs2 = vs
+        vs2.add v
+        let res = find(c, vs2, reverse)
+        if res[0]: return res
   of OP:
     let a = if n.a.isValue: n.a.value else: vs[n.a.to.int]
     let b = if n.b.isValue: n.b.value else: vs[n.b.to.int]
@@ -552,46 +574,18 @@ proc part1(c: VarTable, vs: seq[int]): (bool, seq[int]) =
       of DIV: a div b
       of MOD: a mod b
       of EQL: (if a == b: 1 else: 0)
-    if c.cons[i].isNone or fasterContains(c.cons[i].get, v):
+    if not c.crit[i] or fasterContains(c.cons[i].get, v):
+      # todo: check only if cons != outs
       var vs2 = vs
       vs2.add v
-      let res = part1(c, vs2)
+      let res = find(c, vs2, reverse)
       if res[0]: return res
   else:
     abort("simplify first")
-    
-proc part2(c: VarTable, vs: seq[int]): (bool, seq[int]) =
-  let i = vs.len
-  if i == c.len:
-    return (true, vs)
 
-  if i == 6:
-    echo vs[0..5]
+proc part1(c: VarTable, vs: seq[int]): (bool, seq[int]) = c.find(vs, true)
 
-  let n = c.vars[i]
-  case n.k
-  of SYM:
-    for v in c.outs[i].get:
-      var vs2 = vs
-      vs2.add v
-      let res = part2(c, vs2)
-      if res[0]: return res
-  of OP:
-    let a = if n.a.isValue: n.a.value else: vs[n.a.to.int]
-    let b = if n.b.isValue: n.b.value else: vs[n.b.to.int]
-    let v = case n.op:
-      of ADD: a + b
-      of MUL: a * b
-      of DIV: a div b
-      of MOD: a mod b
-      of EQL: (if a == b: 1 else: 0)
-    if c.cons[i].isNone or fasterContains(c.cons[i].get, v):
-      var vs2 = vs
-      vs2.add v
-      let res = part1(c, vs2)
-      if res[0]: return res
-  else:
-    abort("simplify first")
+proc part2(c: VarTable, vs: seq[int]): (bool, seq[int]) = c.find(vs, false)
 
 proc main(inputFilename: string) =
   let rawInput = readFile(currentSourcePath.parentDir / inputFilename).strip 
@@ -671,6 +665,8 @@ proc main(inputFilename: string) =
     if cg.eliminateNoEffectCons():
       echo "==== after no effect constraint elimination ===="
       updated = true
+
+  cg.markCritical()
 
   echo cg
 
