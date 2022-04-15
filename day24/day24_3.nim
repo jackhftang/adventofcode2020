@@ -640,9 +640,11 @@ proc main(inputFilename: string) =
     else:
       break
 
+  
   discard cg.populateOutputs()
   echo "==== after population ===="
- 
+  echo cg
+
   cg.constraintOutput(VarTableEntryIx(cg.len-1), @[0])
   echo "==== after constraint ===="
  
@@ -681,4 +683,5 @@ proc main(inputFilename: string) =
 
 when isMainModule:
   # main("day24_sample_1.txt")  
-  main("day24_input.txt")  
+  # main("day24_input.txt")  
+  main("p24.data")  
